@@ -3,64 +3,82 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>エンジェルアンサーオラクル</title>
+<title>Angel Answers Oracle - Full 44 Deck</title>
 
 <style>
+
+*{
+    box-sizing:border-box;
+}
+
 body{
     margin:0;
     padding:20px;
-    background:#0f172a;
+    background:
+    radial-gradient(circle at top,#1e293b,#020617);
     color:white;
     font-family:sans-serif;
 }
 
 .container{
-    max-width:1200px;
+    max-width:1400px;
     margin:auto;
 }
 
 h1{
     text-align:center;
-    margin-bottom:25px;
-    color:#facc15;
+    font-size:38px;
+    margin-bottom:10px;
+    color:#fde68a;
+}
+
+.subtitle{
+    text-align:center;
+    color:#cbd5e1;
+    margin-bottom:30px;
 }
 
 .controls{
-    background:#1e293b;
-    padding:20px;
-    border-radius:16px;
-    margin-bottom:25px;
+    background:rgba(15,23,42,0.85);
+    border:1px solid rgba(255,255,255,0.08);
+    padding:25px;
+    border-radius:22px;
+    margin-bottom:30px;
+    backdrop-filter:blur(8px);
 }
 
 label{
     display:block;
-    margin-top:15px;
-    margin-bottom:6px;
+    margin-top:16px;
+    margin-bottom:8px;
+    color:#f8fafc;
 }
 
 select,
 button{
     width:100%;
-    padding:14px;
     border:none;
-    border-radius:12px;
+    border-radius:14px;
+    padding:15px;
     font-size:16px;
 }
 
 button{
     cursor:pointer;
-    transition:0.2s;
-    min-height:48px;
+    transition:0.25s;
+    min-height:52px;
+    font-weight:bold;
 }
 
 .drawBtn{
     background:#7c3aed;
     color:white;
-    margin-top:15px;
+    margin-top:18px;
 }
 
 .drawBtn:hover{
     background:#6d28d9;
+    transform:translateY(-2px);
 }
 
 .saveBtn{
@@ -86,106 +104,152 @@ button{
 .cards{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-    gap:20px;
+    gap:24px;
 }
 
 .card{
-    background:#1e293b;
-    padding:18px;
-    border-radius:18px;
-    text-align:center;
-    box-shadow:0 0 15px rgba(0,0,0,0.3);
-    animation:fadeIn 0.35s ease;
+    perspective:1000px;
 }
 
-.card img{
+.cardInner{
+    position:relative;
     width:100%;
-    border-radius:14px;
-    margin-bottom:14px;
+    transform-style:preserve-3d;
+    animation:flip 0.8s ease forwards;
+}
+
+.cardFront{
+    background:
+    linear-gradient(145deg,#1e293b,#0f172a);
+    border-radius:22px;
+    padding:18px;
+    box-shadow:
+    0 0 20px rgba(0,0,0,0.35),
+    0 0 25px rgba(250,204,21,0.08);
+    border:1px solid rgba(255,255,255,0.05);
+    overflow:hidden;
+}
+
+.cardImage{
+    width:100%;
     aspect-ratio:2/3;
     object-fit:cover;
+    border-radius:16px;
+    margin-bottom:16px;
 }
 
-.card h2{
-    margin:0 0 10px;
-    color:#facc15;
-    font-size:22px;
-}
-
-.answer{
-    font-size:18px;
+.cardTitle{
+    text-align:center;
+    color:#fde68a;
+    font-size:24px;
+    margin-bottom:12px;
     font-weight:bold;
-    margin-bottom:10px;
 }
 
-.message{
-    color:#cbd5e1;
-    line-height:1.7;
+.cardCategory{
+    display:inline-block;
+    background:#7c3aed;
+    padding:6px 12px;
+    border-radius:999px;
+    font-size:12px;
+    margin-bottom:12px;
+}
+
+.cardMessage{
+    color:#e2e8f0;
+    line-height:1.8;
     font-size:15px;
 }
 
 .history{
-    margin-top:40px;
-    background:#1e293b;
-    padding:20px;
-    border-radius:18px;
+    margin-top:50px;
+    background:rgba(15,23,42,0.85);
+    padding:25px;
+    border-radius:22px;
+    border:1px solid rgba(255,255,255,0.08);
+}
+
+.history h2{
+    margin-top:0;
 }
 
 .historyItem{
-    border-bottom:1px solid #334155;
-    padding:20px 0;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    padding:25px 0;
 }
 
 .historyItem:last-child{
     border-bottom:none;
 }
 
+.savedGrid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:16px;
+}
+
 .savedCard{
-    display:inline-block;
-    width:220px;
-    margin:10px;
-    vertical-align:top;
+    background:#111827;
+    border-radius:16px;
+    padding:12px;
     text-align:center;
 }
 
 .savedCard img{
     width:100%;
-    border-radius:12px;
-    margin-bottom:10px;
     aspect-ratio:2/3;
     object-fit:cover;
+    border-radius:12px;
+    margin-bottom:10px;
+}
+
+.savedTitle{
+    color:#fde68a;
+    font-size:14px;
+    margin-bottom:8px;
+    font-weight:bold;
+}
+
+.savedMessage{
+    color:#cbd5e1;
+    font-size:13px;
+    line-height:1.5;
 }
 
 .date{
     color:#94a3b8;
-    margin-bottom:10px;
-    font-size:14px;
+    margin-bottom:16px;
 }
 
 .deleteSingleBtn{
     background:#ef4444;
     color:white;
-    margin-top:15px;
-}
-
-.deleteSingleBtn:hover{
-    background:#dc2626;
+    margin-top:20px;
 }
 
 .emptyText{
     color:#94a3b8;
 }
 
-@keyframes fadeIn{
+@keyframes flip{
     from{
+        transform:rotateY(90deg) scale(0.9);
         opacity:0;
-        transform:translateY(10px);
     }
     to{
+        transform:rotateY(0deg) scale(1);
         opacity:1;
-        transform:translateY(0);
     }
 }
+
+@media(max-width:700px){
+
+    h1{
+        font-size:28px;
+    }
+
+}
+
 </style>
 </head>
 
@@ -193,51 +257,55 @@ button{
 
 <div class="container">
 
-    <h1>👼 エンジェルアンサーオラクル 23:09 👼</h1>
+<h1>👼 Angel Answers Oracle 👼</h1>
 
-    <div class="controls">
+<div class="subtitle">
+44枚フルデッキ版
+</div>
 
-        <label>引く枚数</label>
+<div class="controls">
 
-        <select id="cardCount">
-            <option value="1">1枚</option>
-            <option value="2">2枚</option>
-            <option value="3">3枚</option>
-            <option value="4">4枚</option>
-            <option value="5">5枚</option>
-            <option value="6">6枚</option>
-            <option value="7">7枚</option>
-        </select>
+<label>引く枚数</label>
 
-        <button class="drawBtn" onclick="drawOracle()">
-            カードを引く
-        </button>
+<select id="cardCount">
+<option value="1">1枚</option>
+<option value="2">2枚</option>
+<option value="3">3枚</option>
+<option value="4">4枚</option>
+<option value="5">5枚</option>
+<option value="6">6枚</option>
+<option value="7">7枚</option>
+</select>
 
-        <button class="saveBtn" onclick="saveResult()">
-            結果を保存
-        </button>
+<button class="drawBtn" onclick="drawCards()">
+カードを引く
+</button>
 
-        <button class="deleteBtn" onclick="deleteAllHistory()">
-            保存結果を全削除
-        </button>
+<button class="saveBtn" onclick="saveResult()">
+結果を保存
+</button>
 
-    </div>
+<button class="deleteBtn" onclick="deleteAllHistory()">
+保存結果を全削除
+</button>
 
-    <div class="cards" id="result"></div>
+</div>
 
-    <div class="history">
+<div class="cards" id="result"></div>
 
-        <h2>保存済み結果</h2>
+<div class="history">
 
-        <div id="historyContent">
+<h2>保存済み結果</h2>
 
-            <div class="emptyText">
-                まだ保存された結果はありません。
-            </div>
+<div id="historyContent">
 
-        </div>
+<div class="emptyText">
+まだ保存された結果はありません。
+</div>
 
-    </div>
+</div>
+
+</div>
 
 </div>
 
@@ -246,106 +314,292 @@ button{
 const oracleCards = [
 
 {
-    name:"YES",
-    image:"https://picsum.photos/400/600?random=101",
-    message:"今は前向きに進んで大丈夫です。迷いより行動が流れを変えます。"
+name:"YES",
+category:"肯定",
+message:"今の流れはあなたに追い風です。迷うより進むことで道が開けます。"
 },
 
 {
-    name:"NO",
-    image:"https://picsum.photos/400/600?random=102",
-    message:"今は無理に進める時ではありません。方向転換も必要かもしれません。"
+name:"NO",
+category:"否定",
+message:"今は無理に押し通すべきではありません。一度立ち止まる必要があります。"
 },
 
 {
-    name:"WAIT",
-    image:"https://picsum.photos/400/600?random=103",
-    message:"焦らなくて大丈夫。タイミングが整うまで少し待つ必要があります。"
+name:"WAIT",
+category:"タイミング",
+message:"焦る必要はありません。時期が整えば自然と動き始めます。"
 },
 
 {
-    name:"ASK YOUR ANGELS",
-    image:"https://picsum.photos/400/600?random=104",
-    message:"一人で抱え込まず、直感や周囲からのサインに耳を傾けてください。"
+name:"TRUST",
+category:"信頼",
+message:"あなたの直感は間違っていません。不安より感覚を信じてください。"
 },
 
 {
-    name:"TRUST",
-    image:"https://picsum.photos/400/600?random=105",
-    message:"不安よりも、自分の感覚を信じることで道が開けます。"
+name:"LET GO",
+category:"手放し",
+message:"執着を手放すことで新しい流れが入ってきます。"
 },
 
 {
-    name:"BIG HAPPY CHANGES",
-    image:"https://picsum.photos/400/600?random=106",
-    message:"大きな好転が近づいています。変化を恐れず受け入れてください。"
+name:"ABUNDANCE",
+category:"豊かさ",
+message:"豊かな流れが近づいています。受け取る準備をしてください。"
 },
 
 {
-    name:"IMPROVING HEALTH",
-    image:"https://picsum.photos/400/600?random=107",
-    message:"心身の状態は少しずつ回復へ向かっています。休息も大切です。"
+name:"ROMANCE",
+category:"恋愛",
+message:"恋愛面で大きな感情の動きが起こりやすい時期です。"
 },
 
 {
-    name:"WITHIN THE NEXT FEW WEEKS",
-    image:"https://picsum.photos/400/600?random=108",
-    message:"数週間以内に動きがありそうです。状況は停滞したままでは終わりません。"
+name:"RECOVERY",
+category:"回復",
+message:"疲弊していた状況は少しずつ回復へ向かっています。"
 },
 
 {
-    name:"NOT THE RIGHT TIME",
-    image:"https://picsum.photos/400/600?random=109",
-    message:"内容自体は悪くありませんが、今はまだ時期が整っていません。"
+name:"OPPORTUNITY",
+category:"チャンス",
+message:"新しいチャンスが近づいています。見逃さないでください。"
 },
 
 {
-    name:"ABUNDANCE",
-    image:"https://picsum.photos/400/600?random=110",
-    message:"豊かさやチャンスが流れ込んできます。受け取る準備をしてください。"
+name:"COMPROMISE",
+category:"調和",
+message:"譲り合いや歩み寄りが重要になる状況です。"
 },
 
 {
-    name:"LET GO",
-    image:"https://picsum.photos/400/600?random=111",
-    message:"執着を手放すことで、新しい流れが入ってきます。"
+name:"SUCCESS",
+category:"成功",
+message:"努力が結果へ繋がりやすい強い成功運があります。"
 },
 
 {
-    name:"ROMANCE",
-    image:"https://picsum.photos/400/600?random=112",
-    message:"恋愛運が強まっています。感情面の変化が起きやすい時期です。"
+name:"MEDITATION BRINGS ANSWERS",
+category:"精神",
+message:"静かな時間の中に答えがあります。焦って探さなくて大丈夫です。"
 },
 
 {
-    name:"PEACEFUL RESOLUTION",
-    image:"https://picsum.photos/400/600?random=113",
-    message:"争いよりも穏やかな解決へ向かいやすい流れです。"
+name:"BIG HAPPY CHANGES",
+category:"変化",
+message:"人生の流れが大きく好転していく兆しがあります。"
 },
 
 {
-    name:"RECOVERY",
-    image:"https://picsum.photos/400/600?random=114",
-    message:"疲れていたものが徐々に立て直されていきます。"
+name:"NOT THE RIGHT TIME",
+category:"タイミング",
+message:"方向性は悪くありませんが、今はまだ時期ではありません。"
 },
 
 {
-    name:"OPPORTUNITY",
-    image:"https://picsum.photos/400/600?random=115",
-    message:"新しいチャンスが近づいています。見逃さないでください。"
+name:"ASK FOR HELP FROM OTHERS",
+category:"援助",
+message:"一人で抱え込まず、人の助けを受け入れる必要があります。"
+},
+
+{
+name:"PEACEFUL RESOLUTION",
+category:"解決",
+message:"争いではなく穏やかな形で解決へ向かいやすい流れです。"
+},
+
+{
+name:"WITHIN THE NEXT FEW WEEKS",
+category:"時期",
+message:"数週間以内に状況が動き始める可能性があります。"
+},
+
+{
+name:"WITHIN THE NEXT FEW MONTHS",
+category:"時期",
+message:"結果が見えるまでには少し時間が必要です。"
+},
+
+{
+name:"IN THE NEAR FUTURE",
+category:"未来",
+message:"近い未来に重要な変化が起こる兆しがあります。"
+},
+
+{
+name:"CHOOSE A NEW DIRECTION",
+category:"転換",
+message:"今の方向ではなく、新たな道へ進む必要があります。"
+},
+
+{
+name:"REMAIN POSITIVE",
+category:"精神",
+message:"ネガティブに引っ張られず、希望を持つことが大切です。"
+},
+
+{
+name:"BE ASSERTIVE",
+category:"行動",
+message:"遠慮よりも、自分の意思をはっきり示してください。"
+},
+
+{
+name:"IMPROVING HEALTH",
+category:"健康",
+message:"心身の状態は徐々に改善へ向かっています。"
+},
+
+{
+name:"LISTEN TO YOUR INTUITION",
+category:"直感",
+message:"理屈よりも、あなた自身の感覚を優先してください。"
+},
+
+{
+name:"ASK YOUR ANGELS",
+category:"導き",
+message:"見えないサインや偶然の一致に注意してください。"
+},
+
+{
+name:"GET MORE INFORMATION",
+category:"情報",
+message:"まだ判断材料が足りません。もう少し情報収集が必要です。"
+},
+
+{
+name:"RECONSIDER",
+category:"再考",
+message:"一度決めたことでも、改めて考え直す価値があります。"
+},
+
+{
+name:"NO NEED TO WORRY",
+category:"安心",
+message:"心配しすぎなくても大丈夫。状況は悪い方向へは進みにくいです。"
+},
+
+{
+name:"PERFECT TIMING",
+category:"タイミング",
+message:"今は非常に良いタイミングです。動くなら今です。"
+},
+
+{
+name:"IT'S UP TO YOU",
+category:"選択",
+message:"最終的な鍵はあなた自身の決断にあります。"
+},
+
+{
+name:"FORGIVENESS",
+category:"許し",
+message:"過去を許すことで前へ進みやすくなります。"
+},
+
+{
+name:"A YEAR FROM NOW",
+category:"未来",
+message:"大きな結果は一年後頃に形になりやすいでしょう。"
+},
+
+{
+name:"COMMUNICATE CLEARLY",
+category:"対話",
+message:"曖昧さを避け、率直に伝えることが重要です。"
+},
+
+{
+name:"TAKE ACTION",
+category:"行動",
+message:"待つだけでなく、自分から動く必要があります。"
+},
+
+{
+name:"HELPFUL PEOPLE",
+category:"援助",
+message:"あなたを助けてくれる人物が現れやすい時期です。"
+},
+
+{
+name:"IF YOU BELIEVE",
+category:"信念",
+message:"あなた自身の信じる力が現実を動かします。"
+},
+
+{
+name:"YOU'RE READY",
+category:"準備",
+message:"準備は整っています。恐れず次へ進んでください。"
+},
+
+{
+name:"LOOK FOR A SIGN",
+category:"兆し",
+message:"偶然や小さなサインに大切な意味があります。"
+},
+
+{
+name:"LIKELY",
+category:"可能性",
+message:"かなり高い確率で望む方向へ進みそうです。"
+},
+
+{
+name:"UNLIKELY",
+category:"可能性",
+message:"現時点では実現可能性は低めです。"
+},
+
+{
+name:"ASK YOURSELF",
+category:"内面",
+message:"答えは外ではなく、あなた自身の中にあります。"
+},
+
+{
+name:"BALANCE",
+category:"調和",
+message:"偏りすぎず、心と現実のバランスが必要です。"
+},
+
+{
+name:"DIVINE TIMING",
+category:"運命",
+message:"見えない流れが絶妙なタイミングで動いています。"
+},
+
+{
+name:"NEW BEGINNING",
+category:"始まり",
+message:"新しい章が始まろうとしています。"
 }
 
 ];
+
+function generateImage(seed){
+
+    return `https://picsum.photos/400/600?random=${seed}`;
+
+}
+
+oracleCards.forEach((card,index)=>{
+
+    card.image = generateImage(index + 1);
+
+});
 
 let currentResult = [];
 
 function secureRandom(max){
 
-    const randomArray = new Uint32Array(1);
+    const array = new Uint32Array(1);
 
-    crypto.getRandomValues(randomArray);
+    crypto.getRandomValues(array);
 
-    return randomArray[0] / (0xffffffff + 1) * max;
+    return (array[0] / 4294967296) * max;
 
 }
 
@@ -355,7 +609,7 @@ function shuffle(array){
 
         const j = Math.floor(secureRandom(i + 1));
 
-        [array[i], array[j]] = [array[j], array[i]];
+        [array[i],array[j]] = [array[j],array[i]];
 
     }
 
@@ -363,13 +617,15 @@ function shuffle(array){
 
 }
 
-function drawOracle(){
+function drawCards(){
 
-    const count = parseInt(document.getElementById("cardCount").value);
+    const count = parseInt(
+        document.getElementById("cardCount").value
+    );
 
     const deck = shuffle([...oracleCards]);
 
-    const drawnCards = deck.slice(0, count);
+    const selected = deck.slice(0,count);
 
     const resultDiv = document.getElementById("result");
 
@@ -377,31 +633,46 @@ function drawOracle(){
 
     currentResult = [];
 
-    drawnCards.forEach(card => {
+    selected.forEach((card,index)=>{
 
-        const cardDiv = document.createElement("div");
+        const cardElement = document.createElement("div");
 
-        cardDiv.className = "card";
+        cardElement.className = "card";
 
-        cardDiv.innerHTML = `
-            <img
-                src="${card.image}"
-                alt="${card.name}"
-                onerror="this.src='https://picsum.photos/400/600'"
-            >
+        cardElement.style.animationDelay = `${index * 0.08}s`;
 
-            <h2>${card.name}</h2>
+        cardElement.innerHTML = `
 
-            <div class="answer">
-                ✨ MESSAGE ✨
+        <div class="cardInner">
+
+            <div class="cardFront">
+
+                <img
+                    class="cardImage"
+                    src="${card.image}"
+                    alt="${card.name}"
+                    onerror="this.src='https://picsum.photos/400/600'"
+                >
+
+                <div class="cardTitle">
+                    ${card.name}
+                </div>
+
+                <div class="cardCategory">
+                    ${card.category}
+                </div>
+
+                <div class="cardMessage">
+                    ${card.message}
+                </div>
+
             </div>
 
-            <div class="message">
-                ${card.message}
-            </div>
+        </div>
+
         `;
 
-        resultDiv.appendChild(cardDiv);
+        resultDiv.appendChild(cardElement);
 
         currentResult.push(card);
 
@@ -419,7 +690,9 @@ function saveResult(){
 
     }
 
-    const history = JSON.parse(localStorage.getItem("oracleHistory")) || [];
+    const history = JSON.parse(
+        localStorage.getItem("oracleHistory")
+    ) || [];
 
     history.unshift({
 
@@ -430,11 +703,8 @@ function saveResult(){
     });
 
     localStorage.setItem(
-
         "oracleHistory",
-
         JSON.stringify(history)
-
     );
 
     loadHistory();
@@ -445,20 +715,19 @@ function saveResult(){
 
 function loadHistory(){
 
-    const historyContent = document.getElementById("historyContent");
+    const historyContent =
+    document.getElementById("historyContent");
 
     const history = JSON.parse(
-
         localStorage.getItem("oracleHistory")
-
     ) || [];
 
     if(history.length === 0){
 
         historyContent.innerHTML = `
-            <div class="emptyText">
-                まだ保存された結果はありません。
-            </div>
+        <div class="emptyText">
+        まだ保存された結果はありません。
+        </div>
         `;
 
         return;
@@ -470,42 +739,51 @@ function loadHistory(){
     history.forEach((item,index)=>{
 
         html += `
-            <div class="historyItem">
+        <div class="historyItem">
 
-                <div class="date">
-                    ${item.date}
-                </div>
+        <div class="date">
+        ${item.date}
+        </div>
+
+        <div class="savedGrid">
         `;
 
         item.cards.forEach(card=>{
 
             html += `
-                <div class="savedCard">
 
-                    <img src="${card.image}" alt="${card.name}">
+            <div class="savedCard">
 
-                    <h3>${card.name}</h3>
+            <img
+                src="${card.image}"
+                alt="${card.name}"
+            >
 
-                    <div class="message">
-                        ${card.message}
-                    </div>
+            <div class="savedTitle">
+            ${card.name}
+            </div>
 
-                </div>
+            <div class="savedMessage">
+            ${card.message}
+            </div>
+
+            </div>
+
             `;
 
         });
 
         html += `
-            <br>
+        </div>
 
-            <button
-                class="deleteSingleBtn"
-                onclick="deleteSingleHistory(${index})"
-            >
-                この結果を削除
-            </button>
+        <button
+        class="deleteSingleBtn"
+        onclick="deleteSingleHistory(${index})"
+        >
+        この結果を削除
+        </button>
 
-            </div>
+        </div>
         `;
 
     });
@@ -519,19 +797,14 @@ function deleteSingleHistory(index){
     if(!confirm("この結果を削除しますか？")) return;
 
     const history = JSON.parse(
-
         localStorage.getItem("oracleHistory")
-
     ) || [];
 
     history.splice(index,1);
 
     localStorage.setItem(
-
         "oracleHistory",
-
         JSON.stringify(history)
-
     );
 
     loadHistory();
