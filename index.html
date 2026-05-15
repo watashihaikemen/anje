@@ -1,96 +1,484 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DQ10 さいほう職人計算ツール (改善版)</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジェルアンサーオラクル</title>
+
+<style>
+body{
+    margin:0;
+    padding:20px;
+    background:#0f172a;
+    color:white;
+    font-family:sans-serif;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:25px;
+    color:#facc15;
+}
+
+.controls{
+    background:#1e293b;
+    padding:20px;
+    border-radius:16px;
+    margin-bottom:25px;
+}
+
+label{
+    display:block;
+    margin-top:15px;
+    margin-bottom:6px;
+}
+
+select,
+button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    font-size:16px;
+}
+
+button{
+    cursor:pointer;
+    transition:0.2s;
+    min-height:48px;
+}
+
+.drawBtn{
+    background:#7c3aed;
+    color:white;
+    margin-top:15px;
+}
+
+.drawBtn:hover{
+    background:#6d28d9;
+}
+
+.saveBtn{
+    background:#059669;
+    color:white;
+    margin-top:12px;
+}
+
+.saveBtn:hover{
+    background:#047857;
+}
+
+.deleteBtn{
+    background:#dc2626;
+    color:white;
+    margin-top:12px;
+}
+
+.deleteBtn:hover{
+    background:#b91c1c;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:#1e293b;
+    padding:18px;
+    border-radius:18px;
+    text-align:center;
+    box-shadow:0 0 15px rgba(0,0,0,0.3);
+    animation:fadeIn 0.4s ease;
+}
+
+.card img{
+    width:100%;
+    border-radius:14px;
+    margin-bottom:14px;
+}
+
+.card h2{
+    margin:0 0 10px;
+    color:#facc15;
+}
+
+.answer{
+    font-size:18px;
+    font-weight:bold;
+    margin-bottom:10px;
+}
+
+.message{
+    color:#cbd5e1;
+    line-height:1.7;
+    font-size:15px;
+}
+
+.history{
+    margin-top:40px;
+    background:#1e293b;
+    padding:20px;
+    border-radius:18px;
+}
+
+.historyItem{
+    border-bottom:1px solid #334155;
+    padding:20px 0;
+}
+
+.historyItem:last-child{
+    border-bottom:none;
+}
+
+.savedCard{
+    display:inline-block;
+    width:220px;
+    margin:10px;
+    vertical-align:top;
+    text-align:center;
+}
+
+.savedCard img{
+    width:100%;
+    border-radius:12px;
+    margin-bottom:10px;
+}
+
+.date{
+    color:#94a3b8;
+    margin-bottom:10px;
+    font-size:14px;
+}
+
+.deleteSingleBtn{
+    background:#ef4444;
+    color:white;
+    margin-top:15px;
+}
+
+.deleteSingleBtn:hover{
+    background:#dc2626;
+}
+
+.emptyText{
+    color:#94a3b8;
+}
+
+@keyframes fadeIn{
+    from{
+        opacity:0;
+        transform:translateY(10px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+</style>
 </head>
+
 <body>
 
-    <h1>DQ10 さいほう職人計算ツール (改善版)</h1>
-    <p>原始獣のコート（体上）専用。状態の自動保存＆リセット機能付き。</p>
+<div class="container">
 
-    <div id="setup-area">
-        <h2>初期設定</h2>
-        <div class="setup-item">
-            <label for="player-level">職人レベル:</label>
-            <input type="number" id="player-level" value="80" min="1" max="80">
-        </div>
-        <div class="setup-item">
-            <label for="sewing-needle">さいほう針:</label>
-            <select id="sewing-needle">
-                <option value="copper">銅のさいほう針</option>
-                <option value="iron">鉄のさいほう針</option>
-                <option value="silver">銀のさいほう針</option>
-                <option value="platinum">プラチナさいほう針</option>
-                <option value="super">超さいほう針</option>
-                <option value="miracle" selected>奇跡のさいほう針</option>
-                <option value="light">光のさいほう針</option>
-            </select>
-        </div>
-        <div class="setup-item">
-            <label for="needle-stars">針の星(★)の数:</label>
-            <select id="needle-stars">
-                <option value="0">★0</option>
-                <option value="1">★1</option>
-                <option value="2">★2</option>
-                <option value="3" selected>★3</option>
-            </select>
-        </div>
-        <button id="start-button">計算開始</button>
-    </div>
+    <h1>👼 エンジェルアンサーオラクル 👼</h1>
 
-    <div id="main-tool" class="hidden">
-        <div class="controls-area">
-             <button id="calculate-next-button">次の手を計算</button>
-             <button id="reset-button">全てリセット</button>
-        </div>
+    <div class="controls">
 
-        <div id="status-area">
-            <h3>ステータス</h3>
-            <div class="status-grid">
-                <div><label>集中力:</label> <input type="number" id="current-concentration" class="status-input"> / <span id="max-concentration"></span></div>
-                <div><label>ターン:</label> <input type="number" id="current-turn" value="1" min="1" class="status-input"></div>
-                <div><label>布の状態:</label>
-                    <select id="cloth-condition">
-                        <option value="normal">ふつう</option>
-                        <option value="weak">弱い</option>
-                        <option value="strong">強い</option>
-                        <option value="strongest">最強</option>
-                    </select>
-                </div>
-                 <div><label>基本会心率:</label> <span id="base-crit-rate"></span>%</div>
-            </div>
-             <div id="regeneration-notice"></div>
-        </div>
+        <label>引く枚数</label>
 
-        <div id="sewing-grid-area">
-            <h3>盤面</h3>
-            <div id="sewing-grid">
-                </div>
-        </div>
+        <select id="cardCount">
+            <option value="1">1枚</option>
+            <option value="2">2枚</option>
+            <option value="3">3枚</option>
+        </select>
 
-        <div id="suggestion-area">
-            <h3>おすすめの行動</h3>
-            <div id="suggestion-text">
-                設定を入力して「計算開始」を押してください。
-            </div>
-        </div>
+        <button class="drawBtn" onclick="drawOracle()">
+            カードを引く
+        </button>
 
-        <div id="crit-tracker-area">
-            <h3>ねらいぬい会心トラッカー</h3>
-            <p>
-                ねらいぬい回数: <span id="nerai-attempts">0</span>回 /
-                会心成功回数: <span id="nerai-successes">0</span>回
-            </p>
-            <p>実測会心率: <span id="nerai-actual-rate">0.0</span>%</p>
-            <button id="nerai-attempt-button">+1 回試行</button>
-            <button id="nerai-success-button">+1 回成功</button>
-        </div>
+        <button class="saveBtn" onclick="saveResult()">
+            結果を保存
+        </button>
+
+        <button class="deleteBtn" onclick="deleteAllHistory()">
+            保存結果を全削除
+        </button>
 
     </div>
 
-    <script src="script.js"></script>
+    <div class="cards" id="result"></div>
+
+    <div class="history">
+        <h2>保存済み結果</h2>
+
+        <div id="historyContent">
+            <div class="emptyText">
+                まだ保存された結果はありません。
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+const oracleCards = [
+
+{
+    name:"YES",
+    image:"https://picsum.photos/400/600?random=1",
+    message:"今は前向きに進んで大丈夫です。迷いより行動が流れを変えます。"
+},
+
+{
+    name:"NO",
+    image:"https://picsum.photos/400/600?random=2",
+    message:"今は無理に進める時ではありません。方向転換も必要かもしれません。"
+},
+
+{
+    name:"WAIT",
+    image:"https://picsum.photos/400/600?random=3",
+    message:"焦らなくて大丈夫。タイミングが整うまで少し待つ必要があります。"
+},
+
+{
+    name:"ASK YOUR ANGELS",
+    image:"https://picsum.photos/400/600?random=4",
+    message:"一人で抱え込まず、直感や周囲からのサインに耳を傾けてください。"
+},
+
+{
+    name:"TRUST",
+    image:"https://picsum.photos/400/600?random=5",
+    message:"不安よりも、自分の感覚を信じることで道が開けます。"
+},
+
+{
+    name:"BIG HAPPY CHANGES",
+    image:"https://picsum.photos/400/600?random=6",
+    message:"大きな好転が近づいています。変化を恐れず受け入れてください。"
+},
+
+{
+    name:"IMPROVING HEALTH",
+    image:"https://picsum.photos/400/600?random=7",
+    message:"心身の状態は少しずつ回復へ向かっています。休息も大切です。"
+},
+
+{
+    name:"WITHIN THE NEXT FEW WEEKS",
+    image:"https://picsum.photos/400/600?random=8",
+    message:"数週間以内に動きがありそうです。状況は停滞したままでは終わりません。"
+},
+
+{
+    name:"NOT THE RIGHT TIME",
+    image:"https://picsum.photos/400/600?random=9",
+    message:"内容自体は悪くありませんが、今はまだ時期が整っていません。"
+},
+
+{
+    name:"ABUNDANCE",
+    image:"https://picsum.photos/400/600?random=10",
+    message:"豊かさやチャンスが流れ込んできます。受け取る準備をしてください。"
+},
+
+{
+    name:"LET GO",
+    image:"https://picsum.photos/400/600?random=11",
+    message:"執着を手放すことで、新しい流れが入ってきます。"
+},
+
+{
+    name:"ROMANCE",
+    image:"https://picsum.photos/400/600?random=12",
+    message:"恋愛運が強まっています。感情面の変化が起きやすい時期です。"
+}
+
+];
+
+let currentResult = [];
+
+function secureRandom(max){
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    return array[0] % max;
+}
+
+function shuffle(array){
+    for(let i=array.length-1;i>0;i--){
+        const j = secureRandom(i+1);
+        [array[i],array[j]]=[array[j],array[i]];
+    }
+}
+
+function drawOracle(){
+
+    const count = parseInt(document.getElementById("cardCount").value);
+
+    let deck = [...oracleCards];
+
+    shuffle(deck);
+
+    const drawn = deck.slice(0,count);
+
+    const resultDiv = document.getElementById("result");
+
+    resultDiv.innerHTML = "";
+
+    currentResult = [];
+
+    drawn.forEach(card=>{
+
+        const cardDiv = document.createElement("div");
+
+        cardDiv.className = "card";
+
+        cardDiv.innerHTML = `
+            <img src="${card.image}" onerror="this.src='https://picsum.photos/400/600'">
+
+            <h2>${card.name}</h2>
+
+            <div class="answer">
+                ✨ メッセージ ✨
+            </div>
+
+            <div class="message">
+                ${card.message}
+            </div>
+        `;
+
+        resultDiv.appendChild(cardDiv);
+
+        currentResult.push(card);
+
+    });
+
+}
+
+function saveResult(){
+
+    if(currentResult.length === 0){
+        alert("先にカードを引いてください");
+        return;
+    }
+
+    const history = JSON.parse(localStorage.getItem("oracleHistory")) || [];
+
+    history.unshift({
+        date:new Date().toLocaleString('ja-JP'),
+        cards:currentResult
+    });
+
+    localStorage.setItem("oracleHistory",JSON.stringify(history));
+
+    loadHistory();
+
+    alert("結果を保存しました");
+
+}
+
+function loadHistory(){
+
+    const historyContent = document.getElementById("historyContent");
+
+    const history = JSON.parse(localStorage.getItem("oracleHistory")) || [];
+
+    if(history.length === 0){
+
+        historyContent.innerHTML = `
+            <div class="emptyText">
+                まだ保存された結果はありません。
+            </div>
+        `;
+
+        return;
+    }
+
+    let html = "";
+
+    history.forEach((item,index)=>{
+
+        html += `
+            <div class="historyItem">
+                <div class="date">${item.date}</div>
+        `;
+
+        item.cards.forEach(card=>{
+
+            html += `
+                <div class="savedCard">
+
+                    <img src="${card.image}">
+
+                    <h3>${card.name}</h3>
+
+                    <div class="message">
+                        ${card.message}
+                    </div>
+
+                </div>
+            `;
+
+        });
+
+        html += `
+            <br>
+
+            <button
+                class="deleteSingleBtn"
+                onclick="deleteSingleHistory(${index})"
+            >
+                この結果を削除
+            </button>
+
+            </div>
+        `;
+
+    });
+
+    historyContent.innerHTML = html;
+
+}
+
+function deleteSingleHistory(index){
+
+    if(!confirm("この結果を削除しますか？")) return;
+
+    const history = JSON.parse(localStorage.getItem("oracleHistory")) || [];
+
+    history.splice(index,1);
+
+    localStorage.setItem("oracleHistory",JSON.stringify(history));
+
+    loadHistory();
+
+}
+
+function deleteAllHistory(){
+
+    if(!confirm("保存結果を全削除しますか？")) return;
+
+    localStorage.removeItem("oracleHistory");
+
+    loadHistory();
+
+    alert("全削除しました");
+
+}
+
+loadHistory();
+
+</script>
+
 </body>
 </html>
