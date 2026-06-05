@@ -158,9 +158,8 @@
             border-radius: 50%;
         }
 
-        /* 【修正】通常ホバー時は白にする（緑のフラッシュ現象を防止） */
         .btn:hover {
-            color: var(--text-color);
+            color: var(--accent-color);
             transform: scale(1.05);
         }
 
@@ -187,7 +186,6 @@
             color: var(--bg-color);
         }
 
-        /* 大ボタンのホバーは緑に */
         .btn-large:hover {
             background-color: var(--accent-color);
             color: var(--text-color);
@@ -198,20 +196,9 @@
             text-shadow: 0 0 10px rgba(29, 185, 84, 0.5);
         }
 
-        /* 【追加】アクティブ状態でホバーした時は、緑（ホバー色）を維持 */
-        .btn.active:hover {
-            color: var(--accent-hover);
-        }
-
-        /* 1曲ループ時の特別カラー */
         .btn.active-once {
             color: #00e676;
             text-shadow: 0 0 10px rgba(0, 230, 118, 0.6);
-        }
-
-        /* 【追加】1曲ループ状態でホバーした時は、その色を維持 */
-        .btn.active-once:hover {
-            color: #26ffec;
         }
 
         .volume-container {
@@ -252,6 +239,7 @@
             overflow-y: auto;
             max-height: 400px;
             padding-right: 5px;
+            position: relative; /* スマホ用位置計算の基準 */
         }
 
         .track-list::-webkit-scrollbar {
@@ -270,9 +258,22 @@
             flex-direction: column;
             padding: 10px 14px;
             border-radius: 8px;
-            cursor: pointer;
+            cursor: grab;
             transition: background 0.2s;
             margin-bottom: 4px;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: pan-x; /* 縦スクロールとバッティングさせないための制御 */
+        }
+
+        .track-item:active {
+            cursor: grabbing;
+        }
+
+        .track-item.dragging {
+            opacity: 0.5;
+            background-color: var(--control-bg);
+            border: 1px dashed var(--accent-color);
         }
 
         .track-item:hover {
@@ -350,7 +351,7 @@
 </div>
 
 <script>
-    const songs = [
+    let defaultSongs = [
         { artist: 'カネコアヤノ', title: '恋しい日々', id: 'K1XlKpqqA24' },
         { artist: 'カネコアヤノ', title: '眠れない', id: 'wyLuh2uC0cg' },
         { artist: 'カネコアヤノ', title: 'マジックペンと君の名前', id: 'hACjZqwsTvo' },
@@ -368,6 +369,7 @@
         { artist: 'オレンジスパイニクラブ', title: 'タルパ', id: '1aIpRDODQrQ' }
     ];
 
+    let songs = JSON.parse(localStorage.getItem('wm_songs')) || defaultSongs;
     let currentIndex = parseInt(localStorage.getItem('wm_currentIndex')) || 0;
     let isShuffle = localStorage.getItem('wm_isShuffle') === 'true';
     let repeatMode = parseInt(localStorage.getItem('wm_repeatMode')) || 0; 
@@ -405,19 +407,142 @@
         songs.forEach((song, index) => {
             const li = document.createElement('li');
             li.className = `track-item ${index === currentIndex ? 'playing' : ''}`;
+            li.setAttribute('draggable', 'true');
+            li.setAttribute('data-index', index);
             li.innerHTML = `
                 <div class="list-title">${song.title}</div>
                 <div class="list-artist">${song.artist}</div>
             `;
-            li.addEventListener('click', () => {
+            
+            // PC用ドラッグイベント
+            li.addEventListener('dragstart', handleDragStart);
+            li.addEventListener('dragend', handleDragEnd);
+
+            // スマホ用タッチイベント
+            li.addEventListener('touchstart', handleTouchStart, { passive: false });
+            li.addEventListener('touchmove', handleTouchMove, { passive: false });
+            li.addEventListener('touchend', handleTouchEnd);
+
+            // クリック/タップで曲切り替え（スマホの誤動作防止ロジック付き）
+            li.addEventListener('click', function(e) {
+                if (this.classList.contains('moved')) {
+                    this.classList.remove('moved');
+                    return;
+                }
                 selectTrack(index);
                 player.playVideo();
             });
+
             trackListEl.appendChild(li);
         });
+
+        trackListEl.addEventListener('dragover', handleDragOver);
+        trackListEl.addEventListener('drop', handleDrop);
+
         updatePlayerUI();
     }
 
+    // --- PC用ドラッグ処理 ---
+    function handleDragStart(e) {
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+        finalizeOrder();
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        const draggingItem = trackListEl.querySelector('.dragging');
+        if (!draggingItem) return;
+        const nextSibling = getDragAfterElement(trackListEl, e.clientY);
+        trackListEl.insertBefore(draggingItem, nextSibling);
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+    }
+
+    // --- スマホ用タッチ処理 ---
+    let touchStartTarget = null;
+    let isMovingTrack = false;
+
+    function handleTouchStart(e) {
+        touchStartTarget = this;
+        touchStartTarget.classList.remove('moved');
+        isMovingTrack = false;
+        // 少し長押し、またはスライド判定が出るまでスクロールを邪魔しない仕組み
+    }
+
+    function handleTouchMove(e) {
+        if (!touchStartTarget) return;
+
+        const touch = e.touches[0];
+        // 縦方向の動きがあった場合、ドラッグとみなして背景を光らせる
+        if (!isMovingTrack) {
+            isMovingTrack = true;
+            touchStartTarget.classList.add('dragging');
+            touchStartTarget.classList.add('moved'); // タップ判定を無効化
+        }
+
+        e.preventDefault(); // 画面自体のスクロールを止めてソートに集中させる
+
+        // 指の下にある要素を走査
+        const nextSibling = getDragAfterElement(trackListEl, touch.clientY);
+        trackListEl.insertBefore(touchStartTarget, nextSibling);
+    }
+
+    function handleTouchEnd(e) {
+        if (touchStartTarget) {
+            touchStartTarget.classList.remove('dragging');
+            if (isMovingTrack) {
+                finalizeOrder();
+            }
+        }
+        touchStartTarget = null;
+        isMovingTrack = false;
+    }
+
+    // 挿入位置を計算する共通ロジック
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.track-item:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    // 新しい並び順を反映して保存する処理
+    function finalizeOrder() {
+        const items = [...trackListEl.querySelectorAll('.track-item')];
+        const newSongs = [];
+        let newCurrentIndex = currentIndex;
+        
+        items.forEach((item, newIdx) => {
+            const oldIdx = parseInt(item.getAttribute('data-index'));
+            newSongs.push(songs[oldIdx]);
+            if (oldIdx === currentIndex) {
+                newCurrentIndex = newIdx;
+            }
+        });
+        
+        songs = newSongs;
+        currentIndex = newCurrentIndex;
+        localStorage.setItem('wm_songs', JSON.stringify(songs));
+        localStorage.setItem('wm_currentIndex', currentIndex);
+        
+        // 再描画してデータインデックスの不整合を直す
+        initPlaylist();
+    }
+
+    // --- プレイヤー共通コアロジック ---
     function onYouTubeIframeAPIReady() {
         player = new YT.Player('youtube-player', {
             height: '100%',
@@ -438,7 +563,6 @@
 
     function onPlayerReady(event) {
         initPlaylist();
-        
         volumeBar.value = currentVolume;
         player.setVolume(currentVolume);
         shuffleBtn.classList.toggle('active', isShuffle);
@@ -478,7 +602,6 @@
     function selectTrack(index) {
         if (index < 0 || index >= songs.length) return;
         currentIndex = index;
-        
         localStorage.setItem('wm_currentIndex', currentIndex);
         
         const items = trackListEl.querySelectorAll('.track-item');
