@@ -407,6 +407,9 @@
             </button>
             <button id="repeat-btn" class="btn btn-small" title="リピート: オフ">
             </button>
+            <button id="fullscreen-btn" class="btn btn-small" title="全画面表示">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            </button>
         </div>
 
         <div class="volume-container">
@@ -463,6 +466,7 @@
     const nextBtn = document.getElementById('next-btn');
     const shuffleBtn = document.getElementById('shuffle-btn');
     const repeatBtn = document.getElementById('repeat-btn');
+    const fullscreenBtn = document.getElementById('fullscreen-btn'); // 【追加】
     const progressBar = document.getElementById('progress-bar');
     const volumeBar = document.getElementById('volume-bar');
     const currentTimeEl = document.getElementById('current-time');
@@ -694,7 +698,12 @@
         items.forEach((item, idx) => {
             if (idx === currentIndex) {
                 item.classList.add('playing');
-                item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                
+                /* 【修正】CSSのレスポンシブ幅（768px）を基準に判定 */
+                /* パソコン（768pxより大きい）の時だけ自動スクロールを動かし、スマホでは何もしない */
+                if (window.innerWidth > 768) {
+                    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
             } else {
                 item.classList.remove('playing');
             }
@@ -796,6 +805,17 @@
         }
     }
 
+    // 【追加】全画面ボタンのUI（アイコン）を切り替える関数
+    function updateFullscreenButtonUI() {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+            fullscreenBtn.title = "全画面表示解除";
+            fullscreenBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4"/></svg>`;
+        } else {
+            fullscreenBtn.title = "全画面表示";
+            fullscreenBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>`;
+        }
+    }
+
     formatTime = (seconds) => {
         if (isNaN(seconds)) return "0:00";
         const mins = Math.floor(seconds / 60);
@@ -825,6 +845,33 @@
         localStorage.setItem('wm_repeatMode', repeatMode);
         updateRepeatButtonUI();
     });
+
+    // 【追加】全画面ボタンのクリックイベント
+    fullscreenBtn.addEventListener('click', () => {
+        if (!player || typeof player.getIframe !== 'function') return;
+        
+        const iframe = player.getIframe();
+        
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            // フルスクリーンにする
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen();
+            } else if (iframe.webkitRequestFullscreen) { /* iOS / Safari 対応 */
+                iframe.webkitRequestFullscreen();
+            }
+        } else {
+            // フルスクリーンを解除する
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) { /* iOS / Safari 対応 */
+                document.webkitExitFullscreen();
+            }
+        }
+    });
+
+    // 【追加】ブラウザ側でフルスクリーン状態が変更されたのを検知してアイコンを同期
+    document.addEventListener('fullscreenchange', updateFullscreenButtonUI);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButtonUI);
 
     /* スマホ対応：2回連続タップで動作する初期化処理（セキュリティ制限の完全回避） */
     let isResetConfirming = false;
