@@ -1,766 +1,638 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ANGEL ANSWERS ORACLE - MASTERPIECE</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Web Music Player</title>
+    <style>
+        :root {
+            --bg-color: #0f0f12;
+            --card-color: #1a1a22;
+            --text-color: #ffffff;
+            --text-muted: #a0a0b0;
+            --accent-color: #1db954;
+            --accent-hover: #1ed760;
+            --control-bg: #2a2a36;
+        }
 
-<style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', sans-serif;
+        }
 
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
 
-:root{
---bg1:#020617;
---bg2:#0f172a;
---bg3:#312e81;
---gold:#facc15;
---pink:#ec4899;
---red:#ef4444;
---green:#22c55e;
---blue:#60a5fa;
---violet:#8b5cf6;
---white:#f8fafc;
-}
+        .wrapper {
+            display: flex;
+            flex-direction: row;
+            gap: 30px;
+            width: 100%;
+            max-width: 960px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 25px;
+            border-radius: 24px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin: auto;
+        }
 
-body{
-font-family:"Segoe UI",sans-serif;
-background:
-radial-gradient(circle at top,#4338ca 0%,#0f172a 40%,#020617 100%);
-min-height:100vh;
-overflow-x:hidden;
-color:white;
-position:relative;
-}
+        .player-container {
+            flex: 1;
+            background-color: var(--card-color);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            min-width: 320px;
+        }
 
-body::before{
-content:"";
-position:fixed;
-inset:0;
-pointer-events:none;
-background-image:
-radial-gradient(rgba(255,255,255,0.8) 1px, transparent 1px);
-background-size:45px 45px;
-opacity:0.12;
-animation:starsMove 80s linear infinite;
-}
+        .video-screen {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            background-color: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
 
-body::after{
-content:"";
-position:fixed;
-inset:-50%;
-background:
-radial-gradient(circle,rgba(139,92,246,0.2),transparent 60%),
-radial-gradient(circle,rgba(96,165,250,0.15),transparent 65%),
-radial-gradient(circle,rgba(236,72,153,0.12),transparent 70%);
-filter:blur(120px);
-animation:aurora 20s ease infinite alternate;
-pointer-events:none;
-}
+        .video-screen iframe, #youtube-player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
 
-@keyframes aurora{
-0%{transform:translate(-5%,-5%) rotate(0deg);}
-100%{transform:translate(5%,5%) rotate(15deg);}
-}
+        .track-info {
+            text-align: center;
+            margin-top: 5px;
+        }
 
-@keyframes starsMove{
-from{transform:translateY(0);}
-to{transform:translateY(120px);}
-}
+        .track-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-.container{
-max-width:1600px;
-margin:auto;
-padding:24px;
-position:relative;
-z-index:1;
-}
+        .track-artist {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-.title{
-text-align:center;
-font-size:52px;
-font-weight:900;
-letter-spacing:3px;
-margin-bottom:10px;
-text-shadow:0 0 30px rgba(255,255,255,0.4);
-}
+        .progress-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
 
-.subtitle{
-text-align:center;
-color:#cbd5e1;
-margin-bottom:35px;
-font-size:15px;
-letter-spacing:2px;
-}
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
 
-.panel{
-background:rgba(15,23,42,0.72);
-border:1px solid rgba(255,255,255,0.08);
-backdrop-filter:blur(18px);
-border-radius:28px;
-padding:28px;
-box-shadow:
-0 0 40px rgba(0,0,0,0.4),
-inset 0 0 40px rgba(255,255,255,0.02);
-margin-bottom:28px;
-}
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--control-bg);
+            outline: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
 
-.grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:20px;
-}
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
 
-label{
-display:block;
-margin-bottom:10px;
-margin-top:18px;
-color:#e2e8f0;
-font-size:14px;
-letter-spacing:1px;
-}
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.3);
+            background: var(--accent-hover);
+        }
 
-textarea,
-select,
-button{
-width:100%;
-border:none;
-border-radius:18px;
-padding:16px;
-font-size:16px;
-}
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 18px;
+        }
 
-textarea,
-select{
-background:#020617;
-color:white;
-}
+        .btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            touch-action: manipulation; /* スマホの300msタップ遅延を防止 */
+            transition: color 0.1s ease, transform 0.1s ease, background-color 0.1s ease; /* 応答性を上げるため高速化 */
+        }
 
-textarea{
-min-height:110px;
-resize:none;
-}
+        .btn svg {
+            pointer-events: none; /* アイコン自体へのイベント干渉を防ぎクリック反応を最速化 */
+        }
 
-button{
-font-weight:700;
-cursor:pointer;
-transition:0.35s;
-}
+        .btn:hover {
+            color: var(--accent-color);
+            transform: scale(1.05);
+        }
 
-.mainBtn{
-background:linear-gradient(135deg,#8b5cf6,#6366f1);
-color:white;
-margin-top:20px;
-}
+        .btn:active {
+            transform: scale(0.95);
+        }
 
-.mainBtn:hover{
-transform:translateY(-3px) scale(1.01);
-box-shadow:0 0 30px rgba(139,92,246,0.55);
-}
+        .btn-small {
+            width: 36px;
+            height: 36px;
+            color: var(--text-muted);
+        }
 
-.secondaryBtn{
-background:#059669;
-color:white;
-margin-top:15px;
-}
+        .btn-medium {
+            width: 46px;
+            height: 46px;
+            background-color: var(--control-bg);
+        }
 
-.secondaryBtn:hover{
-background:#047857;
-}
+        .btn-large {
+            width: 60px;
+            height: 60px;
+            background-color: var(--text-color);
+            color: var(--bg-color);
+        }
 
-.deleteBtn{
-background:#dc2626;
-color:white;
-margin-top:15px;
-}
+        .btn-large:hover {
+            background-color: var(--accent-color);
+            color: var(--text-color);
+        }
 
-.deleteBtn:hover{
-background:#b91c1c;
-}
+        .btn.active {
+            color: var(--accent-color);
+            text-shadow: 0 0 10px rgba(29, 185, 84, 0.5);
+        }
 
-.status{
-margin-top:20px;
-text-align:center;
-color:#cbd5e1;
-font-size:15px;
-}
+        .btn.active-once {
+            color: #00e676;
+            text-shadow: 0 0 10px rgba(0, 230, 118, 0.6);
+        }
 
-.deckArea{
-perspective:1400px;
-}
+        .volume-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 60%;
+            margin: 0 auto;
+        }
 
-.deck{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
-gap:18px;
-margin-top:25px;
-}
+        .volume-container svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--text-muted);
+        }
 
-.oracleCard{
-position:relative;
-aspect-ratio:2/3;
-transform-style:preserve-3d;
-transition:1s;
-cursor:pointer;
-}
+        .playlist-container {
+            width: 380px;
+            background-color: var(--card-color);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
 
-.oracleCard:hover{
-transform:translateY(-8px) rotateZ(-1deg);
-}
+        .playlist-header {
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-bottom: 1px solid var(--control-bg);
+            padding-bottom: 10px;
+        }
 
-.oracleCard.flipped{
-transform:rotateY(180deg);
-}
+        .track-list {
+            list-style: none;
+            overflow-y: auto;
+            max-height: 400px;
+            padding-right: 5px;
+        }
 
-.face{
-position:absolute;
-inset:0;
-border-radius:22px;
-overflow:hidden;
-backface-visibility:hidden;
-}
+        .track-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .track-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .track-list::-webkit-scrollbar-thumb {
+            background: var(--control-bg);
+            border-radius: 3px;
+        }
 
-.back{
-background:
-linear-gradient(135deg,#4338ca,#1e1b4b);
-border:2px solid rgba(255,255,255,0.15);
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:50px;
-box-shadow:
-0 0 35px rgba(139,92,246,0.35),
-inset 0 0 25px rgba(255,255,255,0.08);
-}
+        .track-item {
+            display: flex;
+            flex-direction: column;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 4px;
+        }
 
-.back::before{
-content:"✦";
-animation:float 3s ease infinite;
-}
+        .track-item:hover {
+            background-color: var(--control-bg);
+        }
 
-.front{
-transform:rotateY(180deg);
-padding:16px;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-text-align:center;
-background:rgba(15,23,42,0.95);
-border:1px solid rgba(255,255,255,0.08);
-}
+        .track-item.playing {
+            background-color: rgba(29, 185, 84, 0.15);
+            border-left: 4px solid var(--accent-color);
+        }
 
-@keyframes float{
-0%{transform:translateY(0px);}
-50%{transform:translateY(-10px);}
-100%{transform:translateY(0px);}
-}
+        .track-item.playing .list-title {
+            color: var(--accent-color);
+        }
 
-.role{
-font-size:13px;
-color:#cbd5e1;
-margin-bottom:14px;
-letter-spacing:1px;
-}
-
-.cardTitle{
-font-size:20px;
-font-weight:800;
-margin-bottom:14px;
-}
-
-.cardMeaning{
-font-size:13px;
-line-height:1.8;
-color:#d1d5db;
-}
-
-.positive .cardTitle{
-color:var(--gold);
-}
-
-.negative .cardTitle{
-color:#f87171;
-}
-
-.love .cardTitle{
-color:#f472b6;
-}
-
-.action .cardTitle{
-color:#fb923c;
-}
-
-.spiritual .cardTitle{
-color:#93c5fd;
-}
-
-.glow{
-animation:glowPulse 2s infinite;
-}
-
-@keyframes glowPulse{
-0%{box-shadow:0 0 0 rgba(255,255,255,0);}
-50%{box-shadow:0 0 35px rgba(255,255,255,0.35);}
-100%{box-shadow:0 0 0 rgba(255,255,255,0);}
-}
-
-.readingBox{
-display:none;
-margin-top:35px;
-padding:35px;
-line-height:2.1;
-border-radius:28px;
-background:rgba(15,23,42,0.82);
-backdrop-filter:blur(16px);
-border:1px solid rgba(255,255,255,0.08);
-}
-
-.readingBox h2{
-margin-bottom:22px;
-font-size:34px;
-}
-
-.readingText{
-color:#e2e8f0;
-font-size:16px;
-}
-
-.tags{
-margin-top:18px;
-}
-
-.tag{
-display:inline-block;
-padding:8px 14px;
-border-radius:999px;
-background:#312e81;
-margin:4px;
-font-size:13px;
-}
-
-.historyItem{
-padding:20px 0;
-border-top:1px solid rgba(255,255,255,0.08);
-}
-
-.historyQuestion{
-color:#facc15;
-margin-bottom:10px;
-}
-
-.historyDate{
-color:#94a3b8;
-font-size:13px;
-margin-bottom:12px;
-}
-
-.empty{
-color:#94a3b8;
-}
-
-@media(max-width:900px){
-
-.grid{
-grid-template-columns:1fr;
-}
-
-.title{
-font-size:36px;
-}
-
-.deck{
-grid-template-columns:repeat(2,1fr);
-}
-
-.readingBox{
-padding:22px;
-}
-
-}
-
-</style>
+        @media (max-width: 768px) {
+            .wrapper {
+                flex-direction: column;
+                align-items: center;
+            }
+            .playlist-container {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<div class="container">
+<div class="wrapper">
+    <div class="player-container">
+        <div class="video-screen">
+            <div id="youtube-player"></div>
+        </div>
 
-<div class="title">👼 ANGEL ANSWERS ORACLE 👼</div>
-<div class="subtitle">MASTERPIECE EDITION</div>
+        <div class="track-info">
+            <div id="current-title" class="track-title">曲を選択してください</div>
+            <div id="current-artist" class="track-artist">-</div>
+        </div>
 
-<div class="panel">
+        <div class="progress-container">
+            <input type="range" id="progress-bar" class="slider" value="0" max="100" step="1">
+            <div class="time-info">
+                <span id="current-time">0:00</span>
+                <span id="total-duration">0:00</span>
+            </div>
+        </div>
 
-<div class="grid">
+        <div class="controls">
+            <button id="shuffle-btn" class="btn btn-small" title="シャッフル">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20l7-7M21 3L11 13M15 21h6v-5M4 4l17 17"/></svg>
+            </button>
+            <button id="prev-btn" class="btn btn-medium" title="前の曲">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 7l8.5 6V6z"/></svg>
+            </button>
+            <button id="play-btn" class="btn btn-large" title="再生">
+                <svg id="play-icon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button id="next-btn" class="btn btn-medium" title="次の曲">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+            </button>
+            <button id="repeat-btn" class="btn btn-small" title="リピート: オフ">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/>
+                    <text id="repeat-1-text" x="9" y="15" font-size="8" font-family="Arial" font-weight="bold" fill="currentColor" stroke="none" style="display: none;">1</text>
+                </svg>
+            </button>
+        </div>
 
-<div>
-<label>質問</label>
-<textarea id="question" placeholder="例：あの人の気持ちは？進展はありますか？"></textarea>
-</div>
+        <div class="volume-container">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+            <input type="range" id="volume-bar" class="slider" value="50" max="100">
+        </div>
+    </div>
 
-<div>
-<label>テーマ</label>
-<select id="theme">
-<option value="love">恋愛</option>
-<option value="work">仕事</option>
-<option value="future">未来</option>
-<option value="relationship">人間関係</option>
-<option value="spiritual">スピリチュアル</option>
-</select>
-
-<label>スプレッド</label>
-<select id="spreadType">
-<option value="1">1枚引き</option>
-<option value="3">3枚引き</option>
-<option value="5">5枚引き</option>
-<option value="7">7枚深層リーディング</option>
-</select>
-</div>
-
-</div>
-
-<button class="mainBtn" onclick="startOracle()">
-シャッフルして神託を受ける
-</button>
-
-<button class="secondaryBtn" onclick="saveReading()">
-現在の結果を保存
-</button>
-
-<button class="deleteBtn" onclick="deleteHistory()">
-保存履歴を削除
-</button>
-
-<div class="status" id="status">
-心を静かにして質問を念じてください
-</div>
-
-</div>
-
-<div class="deckArea">
-<div class="deck" id="deck"></div>
-</div>
-
-<div class="readingBox" id="readingBox"></div>
-
-<div class="panel">
-<h2>保存履歴</h2>
-<div id="historyContent">
-<div class="empty">保存履歴はありません</div>
-</div>
-</div>
-
+    <div class="playlist-container">
+        <div class="playlist-header">プレイリスト (<span id="track-count">0</span>)</div>
+        <ul id="track-list" class="track-list"></ul>
+    </div>
 </div>
 
 <script>
-
-const cardRoles={
-1:["神託"],
-3:["過去","現在","未来"],
-5:["現状","障害","本音","行動","結果"],
-7:["現状","潜在意識","相手","障害","行動","近未来","最終結果"]
-};
-
-const angelCards=[
-{name:"YES",meaning:"強い肯定。流れは前向きです。",type:"positive"},
-{name:"YES!",meaning:"非常に強力なYES。迷わず進むべきです。",type:"positive"},
-{name:"NO",meaning:"今は進まない方が良い可能性があります。",type:"negative"},
-{name:"NO!",meaning:"警告。無理に進めると後悔しやすいです。",type:"negative"},
-{name:"WAIT",meaning:"焦らず時を待つ必要があります。",type:"neutral"},
-{name:"TRUST",meaning:"あなたの直感を信じるべきです。",type:"spiritual"},
-{name:"ROMANCE",meaning:"恋愛のエネルギーが高まっています。",type:"love"},
-{name:"ABUNDANCE",meaning:"豊かさと成功が近づいています。",type:"positive"},
-{name:"OPPORTUNITY",meaning:"大きなチャンスが訪れます。",type:"positive"},
-{name:"TAKE ACTION",meaning:"今こそ動くタイミングです。",type:"action"},
-{name:"COMMUNICATE CLEARLY",meaning:"本音を伝える必要があります。",type:"neutral"},
-{name:"BIG HAPPY CHANGES",meaning:"人生が大きく好転します。",type:"positive"},
-{name:"NOT THE RIGHT TIME",meaning:"まだタイミングが整っていません。",type:"neutral"},
-{name:"CHOOSE A NEW DIRECTION",meaning:"新しい道を選ぶ時です。",type:"action"},
-{name:"REMAIN POSITIVE",meaning:"前向きさが未来を引き寄せます。",type:"positive"},
-{name:"LET GO",meaning:"執着を手放す必要があります。",type:"neutral"},
-{name:"SUCCESS",meaning:"努力が実を結びます。",type:"positive"},
-{name:"PEACEFUL RESOLUTION",meaning:"穏やかな解決へ向かっています。",type:"positive"},
-{name:"HELPFUL PEOPLE",meaning:"助けてくれる人物が現れます。",type:"positive"},
-{name:"PERFECT TIMING",meaning:"今は最高のタイミングです。",type:"positive"},
-{name:"LISTEN TO YOUR INTUITION",meaning:"理屈より直感を優先してください。",type:"spiritual"},
-{name:"THERE'S SOMETHING BETTER",meaning:"もっと良い選択肢があります。",type:"neutral"},
-{name:"GET MORE INFORMATION",meaning:"まだ情報不足です。",type:"neutral"},
-{name:"IT'S UP TO YOU",meaning:"未来はあなたの選択次第です。",type:"action"},
-{name:"SOON",meaning:"近いうちに動きがあります。",type:"positive"},
-{name:"UNLIKELY",meaning:"現状では可能性は低めです。",type:"negative"},
-{name:"LOOK FOR A SIGN",meaning:"重要なサインに気付いてください。",type:"spiritual"},
-{name:"FORGIVENESS",meaning:"許しが流れを変えます。",type:"neutral"},
-{name:"NO NEED TO WORRY",meaning:"過度な不安は必要ありません。",type:"positive"},
-{name:"YOU'RE READY",meaning:"準備は整っています。",type:"positive"},
-{name:"ASK YOUR ANGELS",meaning:"高次の導きを求めてください。",type:"spiritual"},
-{name:"BE ASSERTIVE",meaning:"遠慮せず意思を示してください。",type:"action"},
-{name:"IMPROVING HEALTH",meaning:"心身の状態は改善へ向かいます。",type:"positive"},
-{name:"MEDITATION BRINGS ANSWERS",meaning:"静かな時間が答えを運びます。",type:"spiritual"},
-{name:"RECOVERY",meaning:"状況は回復へ向かっています。",type:"positive"},
-{name:"RECONSIDER",meaning:"もう一度考え直す必要があります。",type:"neutral"},
-{name:"WITHIN THE NEXT FEW WEEKS",meaning:"数週間以内に動きがあります。",type:"positive"},
-{name:"WITHIN THE NEXT FEW MONTHS",meaning:"数ヶ月以内に形になり始めます。",type:"positive"},
-{name:"IN THE NEAR FUTURE",meaning:"近未来に大きな変化があります。",type:"positive"},
-{name:"ASK FOR HELP FROM OTHERS",meaning:"一人で抱え込まないでください。",type:"positive"},
-{name:"IF YOU BELIEVE",meaning:"信じる力が未来を変えます。",type:"spiritual"},
-{name:"MEDITATION",meaning:"心を整える必要があります。",type:"spiritual"},
-{name:"DIVINE TIMING",meaning:"宇宙のタイミングが動いています。",type:"spiritual"},
-{name:"SPIRITUAL GROWTH",meaning:"魂の成長段階に入っています。",type:"spiritual"}
-];
-
-let currentReading=[];
-let currentQuestion="";
-
-function secureRandom(max){
-const array=new Uint32Array(1);
-crypto.getRandomValues(array);
-return array[0]%max;
-}
-
-function shuffle(array){
-for(let i=array.length-1;i>0;i--){
-const j=secureRandom(i+1);
-[array[i],array[j]]=[array[j],array[i]];
-}
-}
-
-function startOracle(){
-
-currentQuestion=document.getElementById("question").value.trim();
-
-if(currentQuestion===""){
-alert("質問を入力してください");
-return;
-}
-
-const spread=parseInt(document.getElementById("spreadType").value);
-const deckDiv=document.getElementById("deck");
-const readingBox=document.getElementById("readingBox");
-const status=document.getElementById("status");
-
-readingBox.style.display="none";
-deckDiv.innerHTML="";
-currentReading=[];
-
-status.innerHTML="天使達がカードをシャッフルしています…";
-
-let deck=[...angelCards];
-shuffle(deck);
-
-const selected=deck.slice(0,spread);
-
-setTimeout(()=>{
-
-status.innerHTML="カードを開いてください";
-
-selected.forEach((card,index)=>{
-
-const div=document.createElement("div");
-div.className="oracleCard";
-
-const typeClass=card.type || "neutral";
-
-div.innerHTML=`
-<div class="face back"></div>
-<div class="face front ${typeClass}">
-<div class="role">${cardRoles[spread][index]}</div>
-<div class="cardTitle">${card.name}</div>
-<div class="cardMeaning">${card.meaning}</div>
-</div>
-`;
-
-setTimeout(()=>{
-div.style.opacity=1;
-},index*120);
-
-let opened=false;
-
-div.addEventListener("click",()=>{
-
-if(opened) return;
-opened=true;
-
-div.classList.add("flipped");
-div.classList.add("glow");
-
-currentReading.push({
-role:cardRoles[spread][index],
-card:card
-});
-
-if(currentReading.length===spread){
-setTimeout(generateReading,1200);
-}
-
-});
-
-deckDiv.appendChild(div);
-
-});
-
-},1600);
-
-}
-
-function generateReading(){
-
-const readingBox=document.getElementById("readingBox");
-
-const names=currentReading.map(r=>r.card.name);
-
-let text=`
-<h2>🔮 リーディング結果 🔮</h2>
-<div class="readingText">
-<p><strong>質問：</strong>${currentQuestion}</p>
-`;
-
-currentReading.forEach(item=>{
-text+=`
-<p>
-<strong>${item.role}</strong><br>
-${item.card.name}<br>
-${item.card.meaning}
-</p>
-`;
-});
-
-text+=`<hr style="border-color:#334155;margin:24px 0;">`;
-text+=`<h3>総合神託</h3><p>`;
-
-if(names.includes("YES!")||names.includes("SUCCESS")){
-text+=`願いは強く現実化へ向かっています。流れ自体はかなり良好です。 `;
-}
-
-if(names.includes("WAIT")||names.includes("NOT THE RIGHT TIME")){
-text+=`ただし焦りは禁物です。今は準備期間の意味も強いでしょう。 `;
-}
-
-if(names.includes("ROMANCE")){
-text+=`恋愛面のエネルギーはかなり強く出ています。感情の動きが加速しそうです。 `;
-}
-
-if(names.includes("NO!")||names.includes("UNLIKELY")){
-text+=`一部には強い警告も含まれています。無理押しは逆効果になりやすいです。 `;
-}
-
-if(names.includes("TRUST")||names.includes("LISTEN TO YOUR INTUITION")){
-text+=`最終的な鍵は直感です。理屈より感覚の方が正解へ近づきます。 `;
-}
-
-if(names.includes("TAKE ACTION")||names.includes("BE ASSERTIVE")){
-text+=`受け身では流れは変わりません。あなた自身の行動が未来を動かします。 `;
-}
-
-if(names.includes("LET GO")&&names.includes("THERE'S SOMETHING BETTER")){
-text+=`執着を手放すことで、もっと良い未来へ進める暗示があります。 `;
-}
-
-if(names.includes("ROMANCE")&&names.includes("SOON")){
-text+=`恋愛面では比較的近いうちに進展がありそうです。 `;
-}
-
-if(names.includes("MEDITATION BRINGS ANSWERS")||names.includes("MEDITATION")){
-text+=`今は静けさの中に答えがあります。無理に動くより心を整える方が重要です。 `;
-}
-
-text+=`</p>`;
-
-text+=`<div class="tags">`;
-
-currentReading.forEach(r=>{
-text+=`<span class="tag">${r.role} : ${r.card.name}</span>`;
-});
-
-text+=`</div></div>`;
-
-readingBox.innerHTML=text;
-readingBox.style.display="block";
-
-document.getElementById("status").innerHTML=
-"神託が降りました";
-
-window.scrollTo({
-top:readingBox.offsetTop-40,
-behavior:"smooth"
-});
-
-}
-
-function saveReading(){
-
-if(currentReading.length===0){
-alert("まだ結果がありません");
-return;
-}
-
-const history=JSON.parse(localStorage.getItem("angelOracleMaster"))||[];
-
-history.unshift({
-date:new Date().toLocaleString(),
-question:currentQuestion,
-cards:currentReading
-});
-
-localStorage.setItem(
-"angelOracleMaster",
-JSON.stringify(history)
-);
-
-loadHistory();
-
-alert("保存しました");
-
-}
-
-function loadHistory(){
-
-const history=JSON.parse(localStorage.getItem("angelOracleMaster"))||[];
-
-const content=document.getElementById("historyContent");
-
-if(history.length===0){
-content.innerHTML='<div class="empty">保存履歴はありません</div>';
-return;
-}
-
-let html="";
-
-history.forEach(item=>{
-
-html+=`
-<div class="historyItem">
-<div class="historyDate">${item.date}</div>
-<div class="historyQuestion">❓ ${item.question}</div>
-`;
-
-item.cards.forEach(card=>{
-html+=`
-<span class="tag">${card.role} : ${card.card.name}</span>
-`;
-});
-
-html+=`</div>`;
-
-});
-
-content.innerHTML=html;
-
-}
-
-function deleteHistory(){
-
-if(!confirm("履歴を全削除しますか？")) return;
-
-localStorage.removeItem("angelOracleMaster");
-
-loadHistory();
-
-}
-
-loadHistory();
-
+    const songs = [
+        { artist: 'カネコアヤノ', title: '恋しい日々', id: 'K1XlKpqqA24' },
+        { artist: 'カネコアヤノ', title: '眠れない', id: 'wyLuh2uC0cg' },
+        { artist: 'カネコアヤノ', title: 'マジックペンと君の名前', id: 'hACjZqwsTvo' },
+        { artist: 'カネコアヤノ', title: '明け方', id: 'PtGONkpggjo' },
+        { artist: '羊文学', title: 'step', id: '_g4fVuwgUg0' },
+        { artist: '羊文学', title: 'ハイウェイ', id: '6xmtzQu-aaU' },
+        { artist: '羊文学', title: '1999', id: '2v8iq3tI0gM' },
+        { artist: '羊文学', title: 'マフラー', id: 'qF-4iBz-2zI' },
+        { artist: 'Laura day romance', title: 'Young Life', id: 'TL2T4PoJNWQ' },
+        { artist: 'teto', title: '9月になること', id: 'Ng3tAEa0NQM' },
+        { artist: 'teto', title: 'My i my', id: 'WuK9IgIt_Vg' },
+        { artist: 'Helsinki Lambda Club', title: 'Lost in the super market', id: 'sFikoHALzng' },
+        { artist: 'オレンジスパイニクラブ', title: '敏感少女', id: 'OWwex9TXz08' },
+        { artist: 'オレンジスパイニクラブ', title: 'デイリーネイビークレイジー', id: 'tTNp5XLiFQs' },
+        { artist: 'オレンジスパイニクラブ', title: 'タルパ', id: '1aIpRDODQrQ' }
+    ];
+
+    let currentIndex = parseInt(localStorage.getItem('wm_currentIndex')) || 0;
+    let isShuffle = localStorage.getItem('wm_isShuffle') === 'true';
+    let repeatMode = parseInt(localStorage.getItem('wm_repeatMode')) || 0; 
+    
+    // 音量「0」の時にもバグらず読み込めるよう修正
+    let savedVolume = localStorage.getItem('wm_volume');
+    let currentVolume = savedVolume !== null ? parseInt(savedVolume, 10) : 50;
+
+    if (currentIndex >= songs.length || currentIndex < 0) currentIndex = 0;
+
+    let player;
+    let isPlaying = false;
+    let updateTimer;
+    let volumeUpdatePending = false; // 音量スロットリング用フラグ
+
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    const trackListEl = document.getElementById('track-list');
+    const trackCountEl = document.getElementById('track-count');
+    const currentTitleEl = document.getElementById('current-title');
+    const currentArtistEl = document.getElementById('current-artist');
+    const playBtn = document.getElementById('play-btn');
+    const playIcon = document.getElementById('play-icon');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const shuffleBtn = document.getElementById('shuffle-btn');
+    const repeatBtn = document.getElementById('repeat-btn');
+    const repeat1Text = document.getElementById('repeat-1-text');
+    const progressBar = document.getElementById('progress-bar');
+    const volumeBar = document.getElementById('volume-bar');
+    const currentTimeEl = document.getElementById('current-time');
+    const totalDurationEl = document.getElementById('total-duration');
+
+    // APIの準備を待たずに、即座に前回の音量バーの位置をUIに反映
+    volumeBar.value = currentVolume;
+
+    function initPlaylist() {
+        trackCountEl.textContent = songs.length;
+        trackListEl.innerHTML = '';
+        songs.forEach((song, index) => {
+            const li = document.createElement('li');
+            li.className = `track-item ${index === currentIndex ? 'playing' : ''}`;
+            li.innerHTML = `
+                <div class="list-title">${song.title}</div>
+                <div class="list-artist">${song.artist}</div>
+            `;
+            li.addEventListener('click', () => {
+                selectTrack(index);
+                player.playVideo();
+            });
+            trackListEl.appendChild(li);
+        });
+        updatePlayerUI();
+    }
+
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('youtube-player', {
+            height: '100%',
+            width: '100%',
+            videoId: songs[currentIndex].id,
+            playerVars: {
+                'controls': 0,
+                'disablekb': 1,
+                'rel': 0,
+                'modestbranding': 1
+            },
+            events: {
+                'onReady': onPlayerReady,
+                'onStateChange': onPlayerStateChange
+            }
+        });
+    }
+
+    function onPlayerReady(event) {
+        initPlaylist();
+        
+        if (player && typeof player.setVolume === 'function') {
+            player.setVolume(currentVolume);
+        }
+        shuffleBtn.classList.toggle('active', isShuffle);
+        updateRepeatButtonUI();
+
+        progressBar.addEventListener('input', onSeek);
+        volumeBar.addEventListener('input', onVolumeChange);
+    }
+
+    function onPlayerStateChange(event) {
+        if (event.data === YT.PlayerState.PLAYING) {
+            isPlaying = true;
+            setPlayIcon(true);
+            startTimer();
+            progressBar.max = Math.floor(player.getDuration());
+            totalDurationEl.textContent = formatTime(player.getDuration());
+            
+            // 【重要】YouTube側の仕様で動画変更時に音量が最大化されるバグをここで強制上書き
+            if (player && typeof player.setVolume === 'function') {
+                player.setVolume(currentVolume);
+            }
+        } else if (event.data === YT.PlayerState.PAUSED) {
+            isPlaying = false;
+            setPlayIcon(false);
+            clearInterval(updateTimer);
+        } else if (event.data === YT.PlayerState.ENDED) {
+            clearInterval(updateTimer);
+            handleTrackEnded();
+        }
+    }
+
+    function setPlayIcon(playing) {
+        if (playing) {
+            playIcon.innerHTML = `<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`;
+            playBtn.title = "一時停止";
+        } else {
+            playIcon.innerHTML = `<path d="M8 5v14l11-7z"/>`;
+            playBtn.title = "再生";
+        }
+    }
+
+    function selectTrack(index) {
+        if (index < 0 || index >= songs.length) return;
+        currentIndex = index;
+        localStorage.setItem('wm_currentIndex', currentIndex);
+        
+        const items = trackListEl.querySelectorAll('.track-item');
+        items.forEach((item, idx) => {
+            if (idx === currentIndex) {
+                item.classList.add('playing');
+                item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                item.classList.remove('playing');
+            }
+        });
+
+        updatePlayerUI();
+        player.loadVideoById(songs[currentIndex].id);
+    }
+
+    function updatePlayerUI() {
+        currentTitleEl.textContent = songs[currentIndex].title;
+        currentArtistEl.textContent = songs[currentIndex].artist;
+        progressBar.value = 0;
+        currentTimeEl.textContent = "0:00";
+    }
+
+    function startTimer() {
+        clearInterval(updateTimer);
+        updateTimer = setInterval(() => {
+            if (player && typeof player.getCurrentTime === 'function') {
+                const current = Math.floor(player.getCurrentTime());
+                progressBar.value = current;
+                currentTimeEl.textContent = formatTime(current);
+            }
+        }, 1000);
+    }
+
+    function onSeek() {
+        player.seekTo(progressBar.value, true);
+        currentTimeEl.textContent = formatTime(progressBar.value);
+    }
+
+    // 音量バー変更処理（スロットリングによる限界軽量化）
+    function onVolumeChange() {
+        currentVolume = parseInt(volumeBar.value, 10);
+        localStorage.setItem('wm_volume', currentVolume);
+        
+        // メインスレッドを詰まらせないために、描画フレーム同期でYouTube APIを叩く
+        if (!volumeUpdatePending) {
+            volumeUpdatePending = true;
+            requestAnimationFrame(() => {
+                if (player && typeof player.setVolume === 'function') {
+                    player.setVolume(currentVolume);
+                }
+                volumeUpdatePending = false;
+            });
+        }
+    }
+
+    function handleTrackEnded() {
+        if (repeatMode === 2) {
+            player.playVideo(); // 1曲ループ
+        } else {
+            nextTrack(true);
+        }
+    }
+
+    function nextTrack(isAutoEnd = false) {
+        if (isShuffle) {
+            let randomIndex = currentIndex;
+            if (songs.length > 1) {
+                while (randomIndex === currentIndex) {
+                    randomIndex = Math.floor(Math.random() * songs.length);
+                }
+            }
+            selectTrack(randomIndex);
+            player.playVideo();
+        } else {
+            let nextIndex = currentIndex + 1;
+            if (nextIndex >= songs.length) {
+                if (repeatMode === 1 || !isAutoEnd) {
+                    nextIndex = 0;
+                    selectTrack(nextIndex);
+                    player.playVideo();
+                } else {
+                    isPlaying = false;
+                    setPlayIcon(false);
+                }
+            } else {
+                selectTrack(nextIndex);
+                player.playVideo();
+            }
+        }
+    }
+
+    function prevTrack() {
+        let prevIndex = currentIndex - 1;
+        if (prevIndex < 0) prevIndex = songs.length - 1;
+        selectTrack(prevIndex);
+        player.playVideo();
+    }
+
+    // innerHTMLの全書き換えを完全に廃止。クラスとスタイルの変更だけにして超高速化
+    function updateRepeatButtonUI() {
+        if (repeatMode === 0) {
+            repeatBtn.className = "btn btn-small";
+            repeatBtn.title = "リピート: オフ";
+            repeat1Text.style.display = "none";
+        } else if (repeatMode === 1) {
+            repeatBtn.className = "btn btn-small active";
+            repeatBtn.title = "リピート: 全曲";
+            repeat1Text.style.display = "none";
+        } else if (repeatMode === 2) {
+            repeatBtn.className = "btn btn-small active-once";
+            repeatBtn.title = "リピート: 1曲";
+            repeat1Text.style.display = "block";
+        }
+    }
+
+    function formatTime(seconds) {
+        if (isNaN(seconds)) return "0:00";
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    playBtn.addEventListener('click', () => {
+        if (isPlaying) {
+            player.pauseVideo();
+        } else {
+            player.playVideo();
+        }
+    });
+
+    nextBtn.addEventListener('click', () => nextTrack(false));
+    prevBtn.addEventListener('click', prevTrack);
+
+    shuffleBtn.addEventListener('click', () => {
+        isShuffle = !isShuffle;
+        shuffleBtn.classList.toggle('active', isShuffle);
+        localStorage.setItem('wm_isShuffle', isShuffle);
+    });
+
+    repeatBtn.addEventListener('click', () => {
+        repeatMode = (repeatMode + 1) % 3;
+        localStorage.setItem('wm_repeatMode', repeatMode);
+        updateRepeatButtonUI();
+    });
 </script>
 
 </body>
