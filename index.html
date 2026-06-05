@@ -158,8 +158,9 @@
             border-radius: 50%;
         }
 
+        /* 【修正箇所】ホバー時の色を緑から白に変更（OFFの時にすぐ白へ切り替わるようにするため） */
         .btn:hover {
-            color: var(--accent-color);
+            color: var(--text-color);
             transform: scale(1.05);
         }
 
@@ -255,7 +256,7 @@
 
         .track-item {
             display: flex;
-            flex-direction: row; /* 横並びに変更（テキストとツマミ） */
+            flex-direction: row;
             align-items: center;
             justify-content: space-between;
             padding: 10px 14px;
@@ -281,7 +282,7 @@
         .track-meta {
             flex: 1;
             min-width: 0;
-            cursor: pointer; /* 曲名部分は通常のクリック遷移用 */
+            cursor: pointer;
         }
 
         .list-title, .list-artist {
@@ -296,7 +297,6 @@
             margin-top: 2px;
         }
 
-        /* 並び替え用の専用ハンドル（ツマミ） */
         .drag-handle {
             display: flex;
             align-items: center;
@@ -306,7 +306,7 @@
             margin-left: 10px;
             cursor: grab;
             color: var(--text-muted);
-            touch-action: none; /* スマホのブラウザスクロールを完全に無効化して並び替えに集中 */
+            touch-action: none;
         }
         
         .drag-handle:active {
@@ -314,7 +314,6 @@
             color: var(--accent-color);
         }
 
-        /* ドラッグ中の視覚エフェクト */
         .track-item.dragging {
             opacity: 0.5;
             background-color: var(--control-bg);
@@ -443,7 +442,6 @@
             li.setAttribute('draggable', 'true');
             li.setAttribute('data-index', index);
             
-            // 左側：曲のテキスト情報（ここをタップすると曲が変わる）
             const metaDiv = document.createElement('div');
             metaDiv.className = 'track-meta';
             metaDiv.innerHTML = `
@@ -455,7 +453,6 @@
                 player.playVideo();
             });
 
-            // 右側：並び替え用ツマミハンドル（スマホではここを触って動かす）
             const handleDiv = document.createElement('div');
             handleDiv.className = 'drag-handle';
             handleDiv.innerHTML = `
@@ -468,11 +465,9 @@
             li.appendChild(metaDiv);
             li.appendChild(handleDiv);
 
-            // --- PC用ドラッグイベント（ハンドルのみではなく要素全体でも一応動くようにする） ---
             li.addEventListener('dragstart', handleDragStart);
             li.addEventListener('dragend', handleDragEnd);
 
-            // --- スマホ用タッチイベント（ツマミ部分ハンドルにだけ紐付けして誤作動を防ぐ） ---
             handleDiv.addEventListener('touchstart', (e) => handleTouchStart(e, li), { passive: false });
             handleDiv.addEventListener('touchmove', handleTouchMove, { passive: false });
             handleDiv.addEventListener('touchend', handleTouchEnd);
@@ -486,7 +481,6 @@
         updatePlayerUI();
     }
 
-    // --- PC用並び替えロジック ---
     function handleDragStart(e) {
         this.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
@@ -509,7 +503,6 @@
         e.preventDefault();
     }
 
-    // --- スマホ用タッチ並び替えロジック（バグ・増殖対策版） ---
     let activeTouchElement = null;
 
     function handleTouchStart(e, targetLi) {
@@ -519,10 +512,9 @@
 
     function handleTouchMove(e) {
         if (!activeTouchElement) return;
-        e.preventDefault(); // 画面全体のスクロールを停止させて誤作動を完全に防ぐ
+        e.preventDefault();
 
         const touch = e.touches[0];
-        // 指の位置の真下にある「他の曲要素」を探して挿入位置をリアルタイム決定（DOM移動のみ）
         const nextSibling = getDragAfterElement(trackListEl, touch.clientY);
         trackListEl.insertBefore(activeTouchElement, nextSibling);
     }
@@ -531,12 +523,10 @@
         if (activeTouchElement) {
             activeTouchElement.classList.remove('dragging');
             activeTouchElement = null;
-            // 指を完全に離したこのタイミングで「1度だけ」配列データを確定・保存する（増殖バグの完全な修正）
             finalizeOrder();
         }
     }
 
-    // 位置計算共通関数
     function getDragAfterElement(container, y) {
         const draggableElements = [...container.querySelectorAll('.track-item:not(.dragging)')];
         return draggableElements.reduce((closest, child) => {
@@ -550,7 +540,6 @@
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
-    // 配列の並び替え確定と保存（増殖しない安全弁）
     function finalizeOrder() {
         const items = [...trackListEl.querySelectorAll('.track-item')];
         const newSongs = [];
@@ -569,11 +558,9 @@
         localStorage.setItem('wm_songs', JSON.stringify(songs));
         localStorage.setItem('wm_currentIndex', currentIndex);
         
-        // 画面のインデックス番号属性（data-index）を正しく再構築
         initPlaylist();
     }
 
-    // --- YouTubeプレイヤー コア制御群 ---
     function onYouTubeIframeAPIReady() {
         player = new YT.Player('youtube-player', {
             height: '100%',
