@@ -154,17 +154,13 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            transition: all 0.2s ease;
             border-radius: 50%;
-            touch-action: manipulation; /* スマホの300msタップ遅延を防止 */
-            transition: color 0.1s ease, transform 0.1s ease, background-color 0.1s ease; /* 応答性を上げるため高速化 */
         }
 
-        .btn svg {
-            pointer-events: none; /* アイコン自体へのイベント干渉を防ぎクリック反応を最速化 */
-        }
-
+        /* 【修正】通常ホバー時は白にする（緑のフラッシュ現象を防止） */
         .btn:hover {
-            color: var(--accent-color);
+            color: var(--text-color);
             transform: scale(1.05);
         }
 
@@ -191,6 +187,7 @@
             color: var(--bg-color);
         }
 
+        /* 大ボタンのホバーは緑に */
         .btn-large:hover {
             background-color: var(--accent-color);
             color: var(--text-color);
@@ -201,9 +198,20 @@
             text-shadow: 0 0 10px rgba(29, 185, 84, 0.5);
         }
 
+        /* 【追加】アクティブ状態でホバーした時は、緑（ホバー色）を維持 */
+        .btn.active:hover {
+            color: var(--accent-hover);
+        }
+
+        /* 1曲ループ時の特別カラー */
         .btn.active-once {
             color: #00e676;
             text-shadow: 0 0 10px rgba(0, 230, 118, 0.6);
+        }
+
+        /* 【追加】1曲ループ状態でホバーした時は、その色を維持 */
+        .btn.active-once:hover {
+            color: #26ffec;
         }
 
         .volume-container {
@@ -326,10 +334,6 @@
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
             </button>
             <button id="repeat-btn" class="btn btn-small" title="リピート: オフ">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/>
-                    <text id="repeat-1-text" x="9" y="15" font-size="8" font-family="Arial" font-weight="bold" fill="currentColor" stroke="none" style="display: none;">1</text>
-                </svg>
             </button>
         </div>
 
@@ -367,17 +371,13 @@
     let currentIndex = parseInt(localStorage.getItem('wm_currentIndex')) || 0;
     let isShuffle = localStorage.getItem('wm_isShuffle') === 'true';
     let repeatMode = parseInt(localStorage.getItem('wm_repeatMode')) || 0; 
-    
-    // 音量「0」の時にもバグらず読み込めるよう修正
-    let savedVolume = localStorage.getItem('wm_volume');
-    let currentVolume = savedVolume !== null ? parseInt(savedVolume, 10) : 50;
+    let currentVolume = parseInt(localStorage.getItem('wm_volume')) || 50;
 
     if (currentIndex >= songs.length || currentIndex < 0) currentIndex = 0;
 
     let player;
     let isPlaying = false;
     let updateTimer;
-    let volumeUpdatePending = false; // 音量スロットリング用フラグ
 
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
@@ -394,14 +394,10 @@
     const nextBtn = document.getElementById('next-btn');
     const shuffleBtn = document.getElementById('shuffle-btn');
     const repeatBtn = document.getElementById('repeat-btn');
-    const repeat1Text = document.getElementById('repeat-1-text');
     const progressBar = document.getElementById('progress-bar');
     const volumeBar = document.getElementById('volume-bar');
     const currentTimeEl = document.getElementById('current-time');
     const totalDurationEl = document.getElementById('total-duration');
-
-    // APIの準備を待たずに、即座に前回の音量バーの位置をUIに反映
-    volumeBar.value = currentVolume;
 
     function initPlaylist() {
         trackCountEl.textContent = songs.length;
@@ -443,9 +439,8 @@
     function onPlayerReady(event) {
         initPlaylist();
         
-        if (player && typeof player.setVolume === 'function') {
-            player.setVolume(currentVolume);
-        }
+        volumeBar.value = currentVolume;
+        player.setVolume(currentVolume);
         shuffleBtn.classList.toggle('active', isShuffle);
         updateRepeatButtonUI();
 
@@ -460,11 +455,6 @@
             startTimer();
             progressBar.max = Math.floor(player.getDuration());
             totalDurationEl.textContent = formatTime(player.getDuration());
-            
-            // 【重要】YouTube側の仕様で動画変更時に音量が最大化されるバグをここで強制上書き
-            if (player && typeof player.setVolume === 'function') {
-                player.setVolume(currentVolume);
-            }
         } else if (event.data === YT.PlayerState.PAUSED) {
             isPlaying = false;
             setPlayIcon(false);
@@ -488,6 +478,7 @@
     function selectTrack(index) {
         if (index < 0 || index >= songs.length) return;
         currentIndex = index;
+        
         localStorage.setItem('wm_currentIndex', currentIndex);
         
         const items = trackListEl.querySelectorAll('.track-item');
@@ -527,26 +518,15 @@
         currentTimeEl.textContent = formatTime(progressBar.value);
     }
 
-    // 音量バー変更処理（スロットリングによる限界軽量化）
     function onVolumeChange() {
-        currentVolume = parseInt(volumeBar.value, 10);
+        currentVolume = volumeBar.value;
+        player.setVolume(currentVolume);
         localStorage.setItem('wm_volume', currentVolume);
-        
-        // メインスレッドを詰まらせないために、描画フレーム同期でYouTube APIを叩く
-        if (!volumeUpdatePending) {
-            volumeUpdatePending = true;
-            requestAnimationFrame(() => {
-                if (player && typeof player.setVolume === 'function') {
-                    player.setVolume(currentVolume);
-                }
-                volumeUpdatePending = false;
-            });
-        }
     }
 
     function handleTrackEnded() {
         if (repeatMode === 2) {
-            player.playVideo(); // 1曲ループ
+            player.playVideo();
         } else {
             nextTrack(true);
         }
@@ -587,24 +567,27 @@
         player.playVideo();
     }
 
-    // innerHTMLの全書き換えを完全に廃止。クラスとスタイルの変更だけにして超高速化
     function updateRepeatButtonUI() {
         if (repeatMode === 0) {
             repeatBtn.className = "btn btn-small";
             repeatBtn.title = "リピート: オフ";
-            repeat1Text.style.display = "none";
+            repeatBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>`;
         } else if (repeatMode === 1) {
             repeatBtn.className = "btn btn-small active";
             repeatBtn.title = "リピート: 全曲";
-            repeat1Text.style.display = "none";
+            repeatBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>`;
         } else if (repeatMode === 2) {
             repeatBtn.className = "btn btn-small active-once";
             repeatBtn.title = "リピート: 1曲";
-            repeat1Text.style.display = "block";
+            repeatBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/>
+                    <text x="9" y="15" font-size="8" font-family="Arial" font-weight="bold" fill="currentColor" stroke="none">1</text>
+                </svg>`;
         }
     }
 
-    function formatTime(seconds) {
+    formatTime = (seconds) => {
         if (isNaN(seconds)) return "0:00";
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
