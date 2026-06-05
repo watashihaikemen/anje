@@ -38,7 +38,6 @@
             gap: 30px;
             width: 100%;
             max-width: 960px;
-            /* 【軽量化】重い backdrop-filter を廃止し、不透明度を調整した背景色に変更 */
             background: rgba(255, 255, 255, 0.04);
             padding: 25px;
             border-radius: 24px;
@@ -56,7 +55,6 @@
             gap: 20px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
             min-width: 320px;
-            /* 【軽量化】レンダリングの最適化指示 */
             contain: content;
         }
 
@@ -68,6 +66,55 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            transition: transform 0.3s ease;
+        }
+
+        /* 【スマホ対応】CSSによる確実な全画面化スタイル */
+        .video-screen.fullscreen-active {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            padding-top: 0;
+            z-index: 99999;
+            border-radius: 0;
+        }
+
+        /* 全画面の時だけ右上に浮かび上がる「元に戻す」ボタン */
+        .close-fullscreen-btn {
+            display: none;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100000;
+            background: rgba(26, 26, 34, 0.85);
+            color: var(--text-color);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: all 0.2s ease;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .close-fullscreen-btn:hover {
+            background: var(--accent-color);
+            transform: scale(1.05);
+        }
+
+        .close-fullscreen-btn:active {
+            transform: scale(0.95);
+        }
+
+        .video-screen.fullscreen-active .close-fullscreen-btn {
+            display: flex; /* 全画面時のみ表示 */
         }
 
         .video-screen iframe, #youtube-player {
@@ -227,7 +274,6 @@
             flex-direction: column;
             gap: 15px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            /* 【軽量化】レンダリングの最適化指示 */
             contain: content;
         }
 
@@ -267,7 +313,6 @@
             margin-bottom: 4px;
             user-select: none;
             -webkit-user-select: none;
-            /* 【軽量化】GPU駆動を促し、ドラッグ時のカクつきを抑える */
             will-change: transform;
         }
 
@@ -325,7 +370,6 @@
             border: 1px dashed var(--accent-color);
         }
 
-        /* 初期化ボタンのスタイル */
         .reset-btn {
             background: none;
             border: 1px solid var(--control-bg);
@@ -348,7 +392,6 @@
             color: #ef4444;
         }
 
-        /* 確認待機状態のスタイル */
         .reset-btn.confirming {
             background-color: rgba(239, 68, 68, 0.2) !important;
             border-color: #ef4444 !important;
@@ -375,8 +418,12 @@
 
 <div class="wrapper">
     <div class="player-container">
-        <div class="video-screen">
+        <div class="video-screen" id="video-screen">
             <div id="youtube-player"></div>
+            <button id="close-fullscreen-btn" class="close-fullscreen-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4"/></svg>
+                元に戻す
+            </button>
         </div>
 
         <div class="track-info">
@@ -466,7 +513,9 @@
     const nextBtn = document.getElementById('next-btn');
     const shuffleBtn = document.getElementById('shuffle-btn');
     const repeatBtn = document.getElementById('repeat-btn');
-    const fullscreenBtn = document.getElementById('fullscreen-btn'); // 【追加】
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const videoScreen = document.getElementById('video-screen'); // 【追加】
+    const closeFullscreenBtn = document.getElementById('close-fullscreen-btn'); // 【追加】
     const progressBar = document.getElementById('progress-bar');
     const volumeBar = document.getElementById('volume-bar');
     const currentTimeEl = document.getElementById('current-time');
@@ -514,7 +563,6 @@
             li.addEventListener('dragstart', handleDragStart);
             li.addEventListener('dragend', handleDragEnd);
 
-            // スマホ対応：ハンドル部分のタッチで処理を開始。スクロールを防止。
             handleDiv.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 handleTouchStart(e, li);
@@ -539,7 +587,6 @@
         finalizeOrder();
     }
 
-    // 高頻度で発生するdragover時のレイアウト計算（リフロー）を抑制するためのフラグ
     let dragOverTick = false;
     function handleDragOver(e) {
         e.preventDefault();
@@ -562,7 +609,6 @@
 
     let activeTouchElement = null;
 
-    // スマホ対応：タッチ開始時に全体（window）に対して移動・終了イベントを貼ることで指のすり抜けを防止
     function handleTouchStart(e, targetLi) {
         activeTouchElement = targetLi;
         activeTouchElement.classList.add('dragging');
@@ -574,7 +620,7 @@
     let touchMoveTick = false;
     function handleTouchMove(e) {
         if (!activeTouchElement) return;
-        e.preventDefault(); // ドラッグ中の画面スクロールを強制停止
+        e.preventDefault(); 
         if (touchMoveTick) return;
         touchMoveTick = true;
 
@@ -642,7 +688,8 @@
                 'rel': 0,
                 'modestbranding': 1,
                 'showinfo': 0,
-                'iv_load_policy': 3
+                'iv_load_policy': 3,
+                'playsinline': 1 /* スマホで勝手にApple標準プレイヤーが起動するのを防ぐ */
             },
             events: {
                 'onReady': onPlayerReady,
@@ -698,9 +745,6 @@
         items.forEach((item, idx) => {
             if (idx === currentIndex) {
                 item.classList.add('playing');
-                
-                /* 【修正】CSSのレスポンシブ幅（768px）を基準に判定 */
-                /* パソコン（768pxより大きい）の時だけ自動スクロールを動かし、スマホでは何もしない */
                 if (window.innerWidth > 768) {
                     item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
@@ -805,12 +849,17 @@
         }
     }
 
-    // 【追加】全画面ボタンのUI（アイコン）を切り替える関数
-    function updateFullscreenButtonUI() {
-        if (document.fullscreenElement || document.webkitFullscreenElement) {
+    // 【変更】ブラウザの制限を受けない「独自全画面」のトグル処理
+    function toggleFullscreen() {
+        videoScreen.classList.toggle('fullscreen-active');
+        
+        // 通常のコントロールバー内にあるボタン表示も連動させる
+        if (videoScreen.classList.contains('fullscreen-active')) {
+            fullscreenBtn.classList.add('active');
             fullscreenBtn.title = "全画面表示解除";
             fullscreenBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h6v6m10-6h-6v6M4 10h6V4m10 6h-6V4"/></svg>`;
         } else {
+            fullscreenBtn.classList.remove('active');
             fullscreenBtn.title = "全画面表示";
             fullscreenBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>`;
         }
@@ -846,50 +895,23 @@
         updateRepeatButtonUI();
     });
 
-    // 【追加】全画面ボタンのクリックイベント
-    fullscreenBtn.addEventListener('click', () => {
-        if (!player || typeof player.getIframe !== 'function') return;
-        
-        const iframe = player.getIframe();
-        
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            // フルスクリーンにする
-            if (iframe.requestFullscreen) {
-                iframe.requestFullscreen();
-            } else if (iframe.webkitRequestFullscreen) { /* iOS / Safari 対応 */
-                iframe.webkitRequestFullscreen();
-            }
-        } else {
-            // フルスクリーンを解除する
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) { /* iOS / Safari 対応 */
-                document.webkitExitFullscreen();
-            }
-        }
-    });
+    // 【追加】通常ボタン、および全画面時の「元に戻す」浮遊ボタンの両方にイベント設定
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+    closeFullscreenBtn.addEventListener('click', toggleFullscreen);
 
-    // 【追加】ブラウザ側でフルスクリーン状態が変更されたのを検知してアイコンを同期
-    document.addEventListener('fullscreenchange', updateFullscreenButtonUI);
-    document.addEventListener('webkitfullscreenchange', updateFullscreenButtonUI);
-
-    /* スマホ対応：2回連続タップで動作する初期化処理（セキュリティ制限の完全回避） */
     let isResetConfirming = false;
     let resetTimer;
 
     resetBtn.addEventListener('click', () => {
         if (!isResetConfirming) {
-            // 1回目のタップ：ボタンを警告表示に変えて待機状態にする
             isResetConfirming = true;
             resetBtn.textContent = '本当に初期化しますか？（もう一度タップ）';
             resetBtn.classList.add('confirming');
 
-            // 4秒間何もしなければ自動キャンセル
             resetTimer = setTimeout(() => {
                 cancelResetState();
             }, 4000);
         } else {
-            // 2回目のタップ：純粋なクリックイベントの文脈を保ったまま実行
             clearTimeout(resetTimer);
             executePlaylistReset();
         }
@@ -902,29 +924,24 @@
     }
 
     function executePlaylistReset() {
-        // ローカルストレージを削除
         localStorage.removeItem('wm_songs');
         localStorage.removeItem('wm_currentIndex');
         localStorage.removeItem('wm_isShuffle');
         localStorage.removeItem('wm_repeatMode');
 
-        // 各状態を初期値に戻す
         songs = [...defaultSongs];
         currentIndex = 0;
         isShuffle = false;
         repeatMode = 0;
 
-        // UIパーツを同期
         shuffleBtn.classList.toggle('active', isShuffle);
         updateRepeatButtonUI();
         initPlaylist();
 
-        // プレイヤーに1曲目をセット（直接タップイベント内なのでスマホでもブロックされません）
         if (player && typeof player.cueVideoById === 'function') {
             player.cueVideoById(songs[currentIndex].id);
         }
 
-        // ボタンの見た目を戻す
         cancelResetState();
     }
 </script>
