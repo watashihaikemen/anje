@@ -38,10 +38,10 @@
             gap: 30px;
             width: 100%;
             max-width: 960px;
-            background: rgba(255, 255, 255, 0.03);
+            /* 【軽量化】重い backdrop-filter を廃止し、不透明度を調整した背景色に変更 */
+            background: rgba(255, 255, 255, 0.04);
             padding: 25px;
             border-radius: 24px;
-            backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.05);
             margin: auto;
         }
@@ -56,6 +56,8 @@
             gap: 20px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
             min-width: 320px;
+            /* 【軽量化】レンダリングの最適化指示 */
+            contain: content;
         }
 
         .video-screen {
@@ -158,7 +160,6 @@
             border-radius: 50%;
         }
 
-        /* 【修正箇所】ホバー時の色を緑から白に変更（OFFの時にすぐ白へ切り替わるようにするため） */
         .btn:hover {
             color: var(--text-color);
             transform: scale(1.05);
@@ -226,6 +227,8 @@
             flex-direction: column;
             gap: 15px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            /* 【軽量化】レンダリングの最適化指示 */
+            contain: content;
         }
 
         .playlist-header {
@@ -264,6 +267,8 @@
             margin-bottom: 4px;
             user-select: none;
             -webkit-user-select: none;
+            /* 【軽量化】GPU駆動を促し、ドラッグ時のカクつきを抑える */
+            will-change: transform;
         }
 
         .track-item:hover {
@@ -318,6 +323,31 @@
             opacity: 0.5;
             background-color: var(--control-bg);
             border: 1px dashed var(--accent-color);
+        }
+
+        /* 追加：初期化ボタンのスタイル */
+        .reset-btn {
+            background: none;
+            border: 1px solid var(--control-bg);
+            color: var(--text-muted);
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            margin-top: 5px;
+            width: 100%;
+        }
+
+        .reset-btn:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .reset-btn:active {
+            transform: scale(0.98);
         }
 
         @media (max-width: 768px) {
@@ -378,6 +408,7 @@
     <div class="playlist-container">
         <div class="playlist-header">プレイリスト (<span id="track-count">0</span>)</div>
         <ul id="track-list" class="track-list"></ul>
+        <button id="reset-btn" class="reset-btn">状態を初期化する</button>
     </div>
 </div>
 
@@ -426,6 +457,7 @@
     const volumeBar = document.getElementById('volume-bar');
     const currentTimeEl = document.getElementById('current-time');
     const totalDurationEl = document.getElementById('total-duration');
+    const resetBtn = document.getElementById('reset-btn'); // 追加
 
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
@@ -491,12 +523,21 @@
         finalizeOrder();
     }
 
+    // 【軽量化】高頻度で発生するdragover時のレイアウト計算（リフロー）を抑制するためのフラグ
+    let dragOverTick = false;
     function handleDragOver(e) {
         e.preventDefault();
-        const draggingItem = trackListEl.querySelector('.dragging');
-        if (!draggingItem) return;
-        const nextSibling = getDragAfterElement(trackListEl, e.clientY);
-        trackListEl.insertBefore(draggingItem, nextSibling);
+        if (dragOverTick) return;
+        dragOverTick = true;
+        
+        requestAnimationFrame(() => {
+            const draggingItem = trackListEl.querySelector('.dragging');
+            if (draggingItem) {
+                const nextSibling = getDragAfterElement(trackListEl, e.clientY);
+                trackListEl.insertBefore(draggingItem, nextSibling);
+            }
+            dragOverTick = false;
+        });
     }
 
     function handleDrop(e) {
@@ -510,13 +551,22 @@
         activeTouchElement.classList.add('dragging');
     }
 
+    // 【軽量化】TouchMoveも同様にアニメーションフレームで間引く
+    let touchMoveTick = false;
     function handleTouchMove(e) {
         if (!activeTouchElement) return;
         e.preventDefault();
+        if (touchMoveTick) return;
+        touchMoveTick = true;
 
-        const touch = e.touches[0];
-        const nextSibling = getDragAfterElement(trackListEl, touch.clientY);
-        trackListEl.insertBefore(activeTouchElement, nextSibling);
+        requestAnimationFrame(() => {
+            if (activeTouchElement) {
+                const touch = e.touches[0];
+                const nextSibling = getDragAfterElement(trackListEl, touch.clientY);
+                trackListEl.insertBefore(activeTouchElement, nextSibling);
+            }
+            touchMoveTick = false;
+        });
     }
 
     function handleTouchEnd(e) {
@@ -540,6 +590,7 @@
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
+    // 【軽量化】重かった全リセット(initPlaylist)をやめ、DOMの並び順からデータを再構築する爆速処理に変更
     function finalizeOrder() {
         const items = [...trackListEl.querySelectorAll('.track-item')];
         const newSongs = [];
@@ -548,7 +599,9 @@
         items.forEach((item, newIdx) => {
             const oldIdx = parseInt(item.getAttribute('data-index'));
             newSongs.push(songs[oldIdx]);
-            if (oldIdx === currentIndex) {
+            // DOMのカスタムアトリビュートを新しいインデックスに上書き
+            item.setAttribute('data-index', newIdx);
+            if (item.classList.contains('playing')) {
                 newCurrentIndex = newIdx;
             }
         });
@@ -557,8 +610,6 @@
         currentIndex = newCurrentIndex;
         localStorage.setItem('wm_songs', JSON.stringify(songs));
         localStorage.setItem('wm_currentIndex', currentIndex);
-        
-        initPlaylist();
     }
 
     function onYouTubeIframeAPIReady() {
@@ -570,7 +621,9 @@
                 'controls': 0,
                 'disablekb': 1,
                 'rel': 0,
-                'modestbranding': 1
+                'modestbranding': 1,
+                'showinfo': 0,
+                'iv_load_policy': 3
             },
             events: {
                 'onReady': onPlayerReady,
@@ -756,6 +809,33 @@
         repeatMode = (repeatMode + 1) % 3;
         localStorage.setItem('wm_repeatMode', repeatMode);
         updateRepeatButtonUI();
+    });
+
+    /* 追加：初期化ボタンのイベントリスナー */
+    resetBtn.addEventListener('click', () => {
+        if (confirm('プレイリストの並び順と再生設定を初期状態に戻しますか？')) {
+            // ローカルストレージの削除
+            localStorage.removeItem('wm_songs');
+            localStorage.removeItem('wm_currentIndex');
+            localStorage.removeItem('wm_isShuffle');
+            localStorage.removeItem('wm_repeatMode');
+
+            // 各状態を初期値へリセット
+            songs = [...defaultSongs];
+            currentIndex = 0;
+            isShuffle = false;
+            repeatMode = 0;
+
+            // UI状態の同期
+            shuffleBtn.classList.toggle('active', isShuffle);
+            updateRepeatButtonUI();
+            initPlaylist();
+
+            // プレイヤーを停止させ、最初の曲を読み込む（即再生はしない）
+            if (player && typeof player.cueVideoById === 'function') {
+                player.cueVideoById(songs[currentIndex].id);
+            }
+        }
     });
 </script>
 
